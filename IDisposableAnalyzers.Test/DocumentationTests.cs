@@ -18,6 +18,8 @@ using NUnit.Framework;
 
 public static class DocumentationTests
 {
+    private static readonly string[] WindowsNewLines = { "\r\n" };
+
     private static readonly IReadOnlyList<DiagnosticAnalyzer> Analyzers =
         typeof(AnalyzerCategory)
             .Assembly
@@ -84,7 +86,7 @@ public static class DocumentationTests
         var expected = descriptorInfo.Descriptor
                                      .Description
                                      .ToString(CultureInfo.InvariantCulture)
-                                     .Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Split(WindowsNewLines, StringSplitOptions.RemoveEmptyEntries)
                                      .First();
         var actual = descriptorInfo.DocumentationFile.AllLines
                                    .SkipWhile(l => !l.StartsWith("## Description", StringComparison.OrdinalIgnoreCase))

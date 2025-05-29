@@ -95,7 +95,7 @@ internal static partial class Disposable
         bool IsReturnedBefore(ExpressionSyntax expression)
         {
             if (expression.TryFirstAncestor(out BlockSyntax? block) &&
-                block.Statements.TryFirstOfType(out ReturnStatementSyntax _))
+                block.Statements.TryFirstOfType<StatementSyntax, ReturnStatementSyntax>(out _))
             {
                 if (expression.TryFirstAncestor<ForEachStatementSyntax>(out _) ||
                     expression.TryFirstAncestor<ForStatementSyntax>(out _) ||
@@ -105,7 +105,7 @@ internal static partial class Disposable
                 }
 
                 return !block.Contains(disposable) &&
-                       block.SharesAncestor(disposable, out MemberDeclarationSyntax _);
+                       block.SharesAncestor<MemberDeclarationSyntax>(disposable, out _);
             }
 
             return false;

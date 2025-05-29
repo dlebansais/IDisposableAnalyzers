@@ -81,7 +81,7 @@ internal class DisposeMethodAnalyzer : DiagnosticAnalyzer
                 }
 
                 using var walker = FinalizerContextWalker.Borrow(methodDeclaration, context.SemanticModel, context.CancellationToken);
-                foreach (var node in walker.UsedReferenceTypes)
+                foreach (SyntaxNode node in walker.UsedReferenceTypes)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP023ReferenceTypeInFinalizerContext, node.GetLocation()));
                 }

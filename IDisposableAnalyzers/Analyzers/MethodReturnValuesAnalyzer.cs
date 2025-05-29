@@ -26,9 +26,9 @@ internal class MethodReturnValuesAnalyzer : DiagnosticAnalyzer
             context.Node is MethodDeclarationSyntax methodDeclaration &&
             Disposable.IsAssignableFrom(method.ReturnType, context.Compilation))
         {
-            using var walker = ReturnValueWalker.Borrow(methodDeclaration, ReturnValueSearch.RecursiveInside, context.SemanticModel, context.CancellationToken);
-            if (walker.Values.TryFirst(x => IsCreated(x), out _) &&
-                walker.Values.TryFirst(x => IsCachedOrInjected(x) && !IsNop(x), out _))
+            using ReturnValueWalker walker = ReturnValueWalker.Borrow(methodDeclaration, ReturnValueSearch.RecursiveInside, context.SemanticModel, context.CancellationToken);
+            if (walker.Values.TryFirst(x => x is not null && IsCreated(x), out _) &&
+                walker.Values.TryFirst(x => x is not null && IsCachedOrInjected(x) && !IsNop(x), out _))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP015DoNotReturnCachedAndCreated, methodDeclaration.Identifier.GetLocation()));
             }

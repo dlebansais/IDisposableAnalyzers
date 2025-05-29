@@ -1,6 +1,7 @@
 ﻿namespace IDisposableAnalyzers;
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading;
 
 using Gu.Roslyn.AnalyzerExtensions;
@@ -18,7 +19,7 @@ internal sealed class FinalizerContextWalker : RecursiveWalker<FinalizerContextW
     {
     }
 
-    internal IReadOnlyList<SyntaxNode> UsedReferenceTypes => this.usedReferenceTypes;
+    internal ReadOnlyCollection<SyntaxNode> UsedReferenceTypes => this.usedReferenceTypes.AsReadOnly();
 
     public override void VisitIfStatement(IfStatementSyntax node)
     {
@@ -166,7 +167,7 @@ internal sealed class FinalizerContextWalker : RecursiveWalker<FinalizerContextW
         {
         }
 
-        internal IReadOnlyList<SyntaxNode> UsedReferenceTypes => this.usedReferenceTypes;
+        internal ReadOnlyCollection<SyntaxNode> UsedReferenceTypes => this.usedReferenceTypes.AsReadOnly();
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {

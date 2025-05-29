@@ -15,6 +15,8 @@ using Microsoft.CodeAnalysis;
 
 public static class Program
 {
+    private static readonly string[] BinDirectories = { "\\bin\\" };
+
     public static void Main()
     {
         if (false)
@@ -96,7 +98,7 @@ public static class Program
         string FindCsFile()
         {
             return Directory.EnumerateFiles(
-                                AppDomain.CurrentDomain.BaseDirectory.Split(new[] { "\\bin\\" }, StringSplitOptions.RemoveEmptyEntries).First(),
+                                AppDomain.CurrentDomain.BaseDirectory.Split(BinDirectories, StringSplitOptions.RemoveEmptyEntries).First(),
                                 $"{name}.cs",
                                 SearchOption.AllDirectories)
                             .Single();

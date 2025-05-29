@@ -132,7 +132,7 @@ internal class AddUsingFix : DocumentEditorCodeFixProvider
         }
     }
 
-    private static IReadOnlyList<StatementSyntax> StatementsAfter(StatementSyntax statement)
+    private static StatementSyntax[] StatementsAfter(StatementSyntax statement)
     {
         return statement switch
         {
@@ -159,7 +159,7 @@ internal class AddUsingFix : DocumentEditorCodeFixProvider
 
     private static void AddUsingToEndOfBlock(DocumentEditor editor, LocalDeclarationStatementSyntax statement)
     {
-        var statements = StatementsAfter(statement);
+        StatementSyntax[] statements = StatementsAfter(statement);
         RemoveStatements(editor, statements);
         editor.ReplaceNode(
             statement,
@@ -173,7 +173,7 @@ internal class AddUsingFix : DocumentEditorCodeFixProvider
 
     private static void AddUsingToEndOfBlock(DocumentEditor editor, ExpressionStatementSyntax statement)
     {
-        var statements = StatementsAfter(statement);
+        StatementSyntax[] statements = StatementsAfter(statement);
         RemoveStatements(editor, statements);
 
         editor.ReplaceNode(

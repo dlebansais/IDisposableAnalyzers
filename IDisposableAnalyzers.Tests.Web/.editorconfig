@@ -14,3 +14,5 @@ dotnet_diagnostic.SA0001.severity = none
 # SA1203: Constant fields should appear before non-constant fields
 dotnet_diagnostic.SA1203.severity = none
 
+# CA1515: Because an application's API isn't typically referenced from outside the assembly, types can be made internal
+dotnet_diagnostic.CA1515.severity = none
