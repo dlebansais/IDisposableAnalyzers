@@ -92,7 +92,7 @@ First, create a file called `IDisposableAnalyzers.json` and fill it with the fol
 + In `namespace` specify the namespace containing the type.
 + In `assembly` specify the assembly name.
 
-Add the following lines to your project to make the configuration file visible to the analyzer
+Next, add the following lines to your project to make the configuration file visible to the analyzer.
 
 ```csproj
   <ItemGroup>
