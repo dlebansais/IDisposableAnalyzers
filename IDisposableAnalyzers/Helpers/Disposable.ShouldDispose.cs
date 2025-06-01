@@ -10,14 +10,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 internal static partial class Disposable
 {
-    internal static bool ShouldDispose(LocalOrParameter localOrParameter, SemanticModel semanticModel, CancellationToken cancellationToken)
+    internal static bool ShouldDispose(LocalOrParameter localOrParameter, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (localOrParameter.Symbol is IParameterSymbol { RefKind: not RefKind.None })
         {
             return false;
         }
 
-        if (localOrParameter.Type.IsAssignableTo(KnownSymbols.Task, semanticModel.Compilation))
+        if (localOrParameter.Type.IsAssignableTo(KnownSymbols.Task, context.SemanticModel.Compilation))
         {
             return false;
         }
@@ -27,11 +27,11 @@ internal static partial class Disposable
             return false;
         }
 
-        using var recursion = Recursion.Borrow(localOrParameter.Symbol.ContainingType, semanticModel, cancellationToken);
-        using var walker = UsagesWalker.Borrow(localOrParameter, semanticModel, cancellationToken);
+        using var recursion = Recursion.Borrow(localOrParameter.Symbol.ContainingType, context.SemanticModel, cancellationToken);
+        using var walker = UsagesWalker.Borrow(localOrParameter, context.SemanticModel, cancellationToken);
         foreach (var usage in walker.Usages)
         {
-            if (ShouldNotDispose(usage, recursion))
+            if (ShouldNotDispose(usage, recursion, context))
             {
                 if (Scope() is { } scope &&
                     usage.FirstAncestor<IfStatementSyntax>() is { Statement: { } statement } ifStatement &&
@@ -44,7 +44,7 @@ internal static partial class Disposable
                         {
                             if (scope.Contains(other) &&
                                 other.SpanStart > statement.Span.End &&
-                                ShouldNotDispose(other, recursion))
+                                ShouldNotDispose(other, recursion, context))
                             {
                                 return false;
                             }
@@ -59,7 +59,7 @@ internal static partial class Disposable
                         foreach (var other in walker.Usages)
                         {
                             if (statement.Contains(other) &&
-                                ShouldNotDispose(other, recursion))
+                                ShouldNotDispose(other, recursion, context))
                             {
                                 return false;
                             }
@@ -87,29 +87,29 @@ internal static partial class Disposable
             };
         }
 
-        static bool ShouldNotDispose(IdentifierNameSyntax usage, Recursion recursion)
+        static bool ShouldNotDispose(IdentifierNameSyntax usage, Recursion recursion, AnalyzerContext context)
         {
-            if (Returns(usage, recursion))
+            if (Returns(usage, recursion, context))
             {
                 return true;
             }
 
-            if (Assigns(usage, recursion, out _))
+            if (Assigns(usage, recursion, context, out _))
             {
                 return true;
             }
 
-            if (Stores(usage, recursion, out _))
+            if (Stores(usage, recursion, context, out _))
             {
                 return true;
             }
 
-            if (Disposes(usage, recursion))
+            if (Disposes(usage, recursion, context))
             {
                 return true;
             }
 
-            if (DisposedByReturnValue(usage, recursion, out _))
+            if (DisposedByReturnValue(usage, recursion, context, out _))
             {
                 return true;
             }

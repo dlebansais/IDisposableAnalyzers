@@ -1,8 +1,11 @@
 ﻿namespace IDisposableAnalyzers.Tests.Web.Helpers;
 
+using System.Collections.Immutable;
 using System.Threading;
 using Gu.Roslyn.Asserts;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
 public static partial class DisposableTests
@@ -29,7 +32,7 @@ namespace N
             var compilation = CSharpCompilation.Create("test", new[] { syntaxTree }, Settings.Default.MetadataReferences);
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindExpression("Host.CreateDefaultBuilder(args).Build()");
-            Assert.AreEqual(false, Disposable.Ignores(value, semanticModel, CancellationToken.None));
+            Assert.AreEqual(false, Disposable.Ignores(value, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -53,7 +56,7 @@ namespace N
             var compilation = CSharpCompilation.Create("test", new[] { syntaxTree }, Settings.Default.MetadataReferences);
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindExpression("Host.CreateDefaultBuilder(args).Build()");
-            Assert.AreEqual(false, Disposable.Ignores(value, semanticModel, CancellationToken.None));
+            Assert.AreEqual(false, Disposable.Ignores(value, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
     }
 }

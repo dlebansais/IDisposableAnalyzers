@@ -29,12 +29,12 @@ internal class ArgumentAnalyzer : DiagnosticAnalyzer
         if (!context.IsExcludedFromAnalysis() &&
             context.Node is ArgumentSyntax { Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } } argument &&
             argument.RefOrOutKeyword.IsEither(SyntaxKind.RefKeyword, SyntaxKind.OutKeyword) &&
-            IsCreation(argument, context.SemanticModel, context.CancellationToken) &&
+            IsCreation(argument, new AnalyzerContext(context), context.CancellationToken) &&
             context.SemanticModel.TryGetSymbol(argument.Expression, context.CancellationToken, out var symbol))
         {
             if (symbol.Kind == SymbolKind.Discard ||
                 (LocalOrParameter.TryCreate(symbol, out var localOrParameter) &&
-                 Disposable.ShouldDispose(localOrParameter, context.SemanticModel, context.CancellationToken)))
+                 Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken)))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, argument.GetLocation()));
             }
@@ -47,18 +47,18 @@ internal class ArgumentAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsCreation(ArgumentSyntax candidate, SemanticModel semanticModel, CancellationToken cancellationToken)
+    private static bool IsCreation(ArgumentSyntax candidate, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (candidate.Parent is ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } &&
-            semanticModel.TryGetSymbol(invocation, cancellationToken, out var method) &&
+            context.SemanticModel.TryGetSymbol(invocation, cancellationToken, out var method) &&
             method.ContainingType != KnownSymbols.Interlocked &&
             method.TryFindParameter(candidate, out var parameter) &&
-            Disposable.IsPotentiallyAssignableFrom(parameter.Type, semanticModel.Compilation))
+            Disposable.IsPotentiallyAssignableFrom(parameter.Type, context.SemanticModel.Compilation))
         {
-            using var walker = AssignedValueWalker.Borrow(candidate.Expression, semanticModel, cancellationToken);
-            using var recursive = RecursiveValues.Borrow(walker.Values, semanticModel, cancellationToken);
-            return Disposable.IsAnyCreation(recursive, semanticModel, cancellationToken) &&
-                  !Disposable.IsAnyCachedOrInjected(recursive, semanticModel, cancellationToken);
+            using var walker = AssignedValueWalker.Borrow(candidate.Expression, context.SemanticModel, cancellationToken);
+            using var recursive = RecursiveValues.Borrow(walker.Values, context.SemanticModel, cancellationToken);
+            return Disposable.IsAnyCreation(recursive, context.SemanticModel, cancellationToken) &&
+                  !Disposable.IsAnyCachedOrInjected(recursive, context, cancellationToken);
         }
 
         return false;

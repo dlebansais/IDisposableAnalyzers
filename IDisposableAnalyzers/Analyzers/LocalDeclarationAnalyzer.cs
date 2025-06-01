@@ -35,7 +35,7 @@ internal class LocalDeclarationAnalyzer : DiagnosticAnalyzer
                     if (declarator.Initializer is { Value: { } value } &&
                         Disposable.IsCreation(value, context.SemanticModel, context.CancellationToken) &&
                         context.SemanticModel.TryGetSymbol(declarator, context.CancellationToken, out ILocalSymbol? local) &&
-                        Disposable.ShouldDispose(new LocalOrParameter(local), context.SemanticModel, context.CancellationToken))
+                        Disposable.ShouldDispose(new LocalOrParameter(local), new AnalyzerContext(context), context.CancellationToken))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, localDeclaration.GetLocation()));
                     }
@@ -46,7 +46,7 @@ internal class LocalDeclarationAnalyzer : DiagnosticAnalyzer
                 foreach (var declarator in variables)
                 {
                     if (declarator is { Initializer.Value: { } value } &&
-                        Disposable.IsCachedOrInjectedOnly(value, value, context.SemanticModel, context.CancellationToken))
+                        Disposable.IsCachedOrInjectedOnly(value, value, new AnalyzerContext(context), context.CancellationToken))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, value.GetLocation()));
                     }

@@ -66,7 +66,7 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
         {
             return lambda switch
             {
-                { Parent: ArgumentSyntax } => Disposable.Ignores(lambda, context.SemanticModel, context.CancellationToken),
+                { Parent: ArgumentSyntax } => Disposable.Ignores(lambda, new AnalyzerContext(context), context.CancellationToken),
                 _ => true,
             };
         }

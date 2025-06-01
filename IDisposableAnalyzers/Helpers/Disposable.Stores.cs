@@ -12,13 +12,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 internal static partial class Disposable
 {
-    internal static bool Stores(LocalOrParameter localOrParameter, SemanticModel semanticModel, CancellationToken cancellationToken, [NotNullWhen(true)] out ISymbol? container)
+    internal static bool Stores(LocalOrParameter localOrParameter, AnalyzerContext context, CancellationToken cancellationToken, [NotNullWhen(true)] out ISymbol? container)
     {
-        using var recursion = Recursion.Borrow(localOrParameter.Symbol.ContainingType, semanticModel, cancellationToken);
-        using var walker = UsagesWalker.Borrow(localOrParameter, semanticModel, cancellationToken);
+        using var recursion = Recursion.Borrow(localOrParameter.Symbol.ContainingType, context.SemanticModel, cancellationToken);
+        using var walker = UsagesWalker.Borrow(localOrParameter, context.SemanticModel, cancellationToken);
         foreach (var usage in walker.Usages)
         {
-            if (Stores(usage, recursion, out container))
+            if (Stores(usage, recursion, context, out container))
             {
                 return true;
             }
@@ -28,13 +28,13 @@ internal static partial class Disposable
         return false;
     }
 
-    internal static bool StoresAny(RecursiveValues recursive, INamedTypeSymbol containingType, SemanticModel semanticModel, CancellationToken cancellationToken)
+    internal static bool StoresAny(RecursiveValues recursive, INamedTypeSymbol containingType, AnalyzerContext context, CancellationToken cancellationToken)
     {
-        using var recursion = Recursion.Borrow(containingType, semanticModel, cancellationToken);
+        using var recursion = Recursion.Borrow(containingType, context.SemanticModel, cancellationToken);
         recursive.Reset();
         while (recursive.MoveNext())
         {
-            if (Stores(recursive.Current, recursion, out _))
+            if (Stores(recursive.Current, recursion, context, out _))
             {
                 return true;
             }
@@ -43,7 +43,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool Stores(ExpressionSyntax candidate, Recursion recursion, [NotNullWhen(true)] out ISymbol? container)
+    private static bool Stores(ExpressionSyntax candidate, Recursion recursion, AnalyzerContext context, [NotNullWhen(true)] out ISymbol? container)
     {
         switch (candidate)
         {
@@ -52,30 +52,30 @@ internal static partial class Disposable
                      recursion.SemanticModel.TryGetSymbol(arguments[0].Expression, recursion.CancellationToken, out container):
                 return true;
             case { Parent: InitializerExpressionSyntax { Parent: ImplicitArrayCreationExpressionSyntax arrayCreation } }:
-                return StoresOrAssigns(arrayCreation, out container);
+                return StoresOrAssigns(arrayCreation, context, out container);
             case { Parent: InitializerExpressionSyntax { Parent: ArrayCreationExpressionSyntax arrayCreation } }:
-                return StoresOrAssigns(arrayCreation, out container);
+                return StoresOrAssigns(arrayCreation, context, out container);
             case { Parent: InitializerExpressionSyntax { Parent: ObjectCreationExpressionSyntax objectInitializer } }:
-                return StoresOrAssigns(objectInitializer, out container);
+                return StoresOrAssigns(objectInitializer, context, out container);
             case { Parent: AssignmentExpressionSyntax { Right: { } right, Left: ElementAccessExpressionSyntax { Expression: { } element } } }
                 when right.Contains(candidate):
                 return recursion.SemanticModel.TryGetSymbol(element, recursion.CancellationToken, out container);
             case { }
                 when Identity(candidate, recursion) is { } id &&
-                     Stores(id, recursion, out container):
+                     Stores(id, recursion, context, out container):
                 return true;
             case { Parent: ArgumentSyntax { Parent: ArgumentListSyntax { Parent: ObjectCreationExpressionSyntax _ } } argument }
                 when recursion.Target(argument) is { } target:
-                if (DisposedByReturnValue(target, recursion, out var objectCreation) ||
-                    AccessibleInReturnValue(target, recursion, out objectCreation))
+                if (DisposedByReturnValue(target, recursion, context, out var objectCreation) ||
+                    AccessibleInReturnValue(target, recursion, context, out objectCreation))
                 {
-                    return StoresOrAssigns(objectCreation, out container);
+                    return StoresOrAssigns(objectCreation, context, out container);
                 }
 
                 container = null;
                 return false;
             case { Parent: ArgumentSyntax { Parent: TupleExpressionSyntax tupleExpression } }:
-                return StoresOrAssigns(tupleExpression, out container);
+                return StoresOrAssigns(tupleExpression, context, out container);
             case { Parent: ArgumentSyntax { Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } } argument }
                 when recursion.Target(argument) is { Symbol: { } parameter } target:
                 if (target.Declaration is null &&
@@ -111,15 +111,15 @@ internal static partial class Disposable
                     }
                 }
 
-                if (Stores(target, recursion, out container))
+                if (Stores(target, recursion, context, out container))
                 {
                     return true;
                 }
 
-                if (DisposedByReturnValue(target, recursion, out var creation) ||
-                    AccessibleInReturnValue(target, recursion, out creation))
+                if (DisposedByReturnValue(target, recursion, context, out var creation) ||
+                    AccessibleInReturnValue(target, recursion, context, out creation))
                 {
-                    return StoresOrAssigns(creation, out container);
+                    return StoresOrAssigns(creation, context, out container);
                 }
 
                 container = null;
@@ -127,7 +127,7 @@ internal static partial class Disposable
 
             case { Parent: EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax variableDeclarator } }
                 when recursion.Target(variableDeclarator) is { } target:
-                return Stores(target, recursion, out container);
+                return Stores(target, recursion, context, out container);
             case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax { Name.Identifier.ValueText: "DisposeWith" }, ArgumentList.Arguments: { Count: 1 } arguments }:
                 container = recursion.SemanticModel.GetSymbolSafe(arguments[0].Expression, recursion.CancellationToken);
                 return container != null;
@@ -136,14 +136,14 @@ internal static partial class Disposable
                 return false;
         }
 
-        bool StoresOrAssigns(ExpressionSyntax expression, out ISymbol? result)
+        bool StoresOrAssigns(ExpressionSyntax expression, AnalyzerContext context, out ISymbol? result)
         {
-            if (Stores(expression, recursion, out result))
+            if (Stores(expression, recursion, context, out result))
             {
                 return true;
             }
 
-            if (Assigns(expression, recursion, out var fieldOrProperty))
+            if (Assigns(expression, recursion, context, out var fieldOrProperty))
             {
                 result = fieldOrProperty.Symbol;
                 return true;
@@ -154,7 +154,7 @@ internal static partial class Disposable
         }
     }
 
-    private static bool Stores<TSource, TSymbol, TNode>(Target<TSource, TSymbol, TNode> target, Recursion recursion, [NotNullWhen(true)] out ISymbol? container)
+    private static bool Stores<TSource, TSymbol, TNode>(Target<TSource, TSymbol, TNode> target, Recursion recursion, AnalyzerContext context, [NotNullWhen(true)] out ISymbol? container)
         where TSource : SyntaxNode
         where TSymbol : ISymbol
         where TNode : SyntaxNode
@@ -164,7 +164,7 @@ internal static partial class Disposable
             using var walker = UsagesWalker.Borrow(target.Symbol, target.Declaration, recursion.SemanticModel, recursion.CancellationToken);
             foreach (var usage in walker.Usages)
             {
-                if (Stores(usage, recursion, out container))
+                if (Stores(usage, recursion, context, out container))
                 {
                     return true;
                 }
@@ -175,7 +175,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool AccessibleInReturnValue(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion, [NotNullWhen(true)] out ExpressionSyntax? creation)
+    private static bool AccessibleInReturnValue(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion, AnalyzerContext context, [NotNullWhen(true)] out ExpressionSyntax? creation)
     {
         switch (target)
         {
@@ -199,8 +199,8 @@ internal static partial class Disposable
                     {
                         if (usage.Parent is ArgumentSyntax containingArgument &&
                             recursion.Target(containingArgument) is { } argumentTarget &&
-                            AccessibleInReturnValue(argumentTarget, recursion, out var containingCreation) &&
-                            Returns(containingCreation, recursion))
+                            AccessibleInReturnValue(argumentTarget, recursion, context, out var containingCreation) &&
+                            Returns(containingCreation, recursion, context))
                         {
                             return true;
                         }
@@ -221,7 +221,7 @@ internal static partial class Disposable
                     using var walker = UsagesWalker.Borrow(target.Symbol, target.Declaration, recursion.SemanticModel, recursion.CancellationToken);
                     foreach (var usage in walker.Usages)
                     {
-                        if (Stores(usage, recursion, out var container) &&
+                        if (Stores(usage, recursion, context, out var container) &&
                             FieldOrProperty.TryCreate(container, out var containerMember) &&
                             recursion.SemanticModel.SemanticModelFor(target.Source)?.IsAccessible(target.Source.SpanStart, containerMember.Symbol) == true)
                         {
@@ -229,7 +229,7 @@ internal static partial class Disposable
                             return true;
                         }
 
-                        if (Assigns(usage, recursion, out var fieldOrProperty) &&
+                        if (Assigns(usage, recursion, context, out var fieldOrProperty) &&
                             recursion.SemanticModel.SemanticModelFor(target.Source)?.IsAccessible(target.Source.SpanStart, fieldOrProperty.Symbol) == true)
                         {
                             creation = objectCreation;

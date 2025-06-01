@@ -11,23 +11,23 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 internal static partial class Disposable
 {
-    internal static bool Ignores(ExpressionSyntax candidate, SemanticModel semanticModel, CancellationToken cancellationToken)
+    internal static bool Ignores(ExpressionSyntax candidate, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (candidate.TryFirstAncestor(out TypeDeclarationSyntax? containingTypeDeclaration) &&
-            semanticModel.TryGetNamedType(containingTypeDeclaration, cancellationToken, out var containingType))
+            context.SemanticModel.TryGetNamedType(containingTypeDeclaration, cancellationToken, out var containingType))
         {
-            using var recursion = Recursion.Borrow(containingType, semanticModel, cancellationToken);
-            return Ignores(candidate, recursion);
+            using var recursion = Recursion.Borrow(containingType, context.SemanticModel, cancellationToken);
+            return Ignores(candidate, recursion, context);
         }
 
         return false;
     }
 
-    private static bool Ignores(ExpressionSyntax candidate, Recursion recursion)
+    private static bool Ignores(ExpressionSyntax candidate, Recursion recursion, AnalyzerContext context)
     {
         using (var temp = Recursion.Borrow(recursion.ContainingType, recursion.SemanticModel, recursion.CancellationToken))
         {
-            if (Disposes(candidate, temp))
+            if (Disposes(candidate, temp, context))
             {
                 return false;
             }
@@ -35,7 +35,7 @@ internal static partial class Disposable
 
         using (var temp = Recursion.Borrow(recursion.ContainingType, recursion.SemanticModel, recursion.CancellationToken))
         {
-            if (Assigns(candidate, temp, out _))
+            if (Assigns(candidate, temp, context, out _))
             {
                 return false;
             }
@@ -43,7 +43,7 @@ internal static partial class Disposable
 
         using (var temp = Recursion.Borrow(recursion.ContainingType, recursion.SemanticModel, recursion.CancellationToken))
         {
-            if (Stores(candidate, temp, out _))
+            if (Stores(candidate, temp, context, out _))
             {
                 return false;
             }
@@ -51,7 +51,7 @@ internal static partial class Disposable
 
         using (var temp = Recursion.Borrow(recursion.ContainingType, recursion.SemanticModel, recursion.CancellationToken))
         {
-            if (Returns(candidate, temp))
+            if (Returns(candidate, temp, context))
             {
                 return false;
             }
@@ -64,33 +64,33 @@ internal static partial class Disposable
             { Parent: EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax { Identifier.ValueText: "_" } } }
                 => true,
             { Parent: AwaitExpressionSyntax { Parent: ParenthesizedExpressionSyntax { } expression } }
-                => Ignores(expression, recursion),
+                => Ignores(expression, recursion, context),
             { Parent: AnonymousFunctionExpressionSyntax _ }
                 => false,
             { Parent: StatementSyntax _ }
                 => true,
             { }
                 when Identity(candidate, recursion) is { } id &&
-                     !Ignores(id, recursion)
+                     !Ignores(id, recursion, context)
                 => false,
             { Parent: ArgumentSyntax { Parent: TupleExpressionSyntax tuple } }
-                => Ignores(tuple, recursion),
+                => Ignores(tuple, recursion, context),
             { Parent: ArgumentSyntax argument }
                 when recursion.Target(argument) is { } target
-                => Ignores(target, recursion),
+                => Ignores(target, recursion, context),
             { Parent: MemberAccessExpressionSyntax _ }
                 => WrappedAndIgnored(),
             { Parent: ConditionalAccessExpressionSyntax _ }
                 => WrappedAndIgnored(),
             { Parent: InitializerExpressionSyntax { Parent: ExpressionSyntax creation } }
-                => Ignores(creation, recursion),
+                => Ignores(creation, recursion, context),
             _ => false,
         };
 
         bool WrappedAndIgnored()
         {
-            if (DisposedByReturnValue(candidate, recursion, out var returnValue) &&
-                !Ignores(returnValue, recursion))
+            if (DisposedByReturnValue(candidate, recursion, context, out var returnValue) &&
+                !Ignores(returnValue, recursion, context))
             {
                 return false;
             }
@@ -99,7 +99,7 @@ internal static partial class Disposable
         }
     }
 
-    private static bool Ignores(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion)
+    private static bool Ignores(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion, AnalyzerContext context)
     {
         if (target.Symbol.Type.MetadataName is "TestDelegate" or "AsyncTestDelegate")
         {
@@ -110,10 +110,10 @@ internal static partial class Disposable
         {
             if (target.Declaration is null)
             {
-                if (!Ignores(parentExpression, recursion))
+                if (!Ignores(parentExpression, recursion, context))
                 {
-                    return !DisposedByReturnValue(target, recursion, out _) &&
-                           !AccessibleInReturnValue(target, recursion, out _);
+                    return !DisposedByReturnValue(target, recursion, context, out _) &&
+                           !AccessibleInReturnValue(target, recursion, context, out _);
                 }
 
                 return true;
@@ -147,7 +147,7 @@ internal static partial class Disposable
                         if (DisposeMethod.FindFirst(assignedMember.ContainingType, recursion.SemanticModel.Compilation, Search.TopLevel) is { } disposeMethod &&
                             DisposableMember.IsDisposed(assignedMember, disposeMethod, recursion.SemanticModel, recursion.CancellationToken))
                         {
-                            return Ignores(parentExpression, recursion);
+                            return Ignores(parentExpression, recursion, context);
                         }
 
                         if (parentExpression.Parent!.IsEither(SyntaxKind.ArrowExpressionClause, SyntaxKind.ReturnStatement))
@@ -157,10 +157,10 @@ internal static partial class Disposable
 
                         return !recursion.SemanticModel.IsAccessible(target.Source.SpanStart, assignedMember.Symbol);
                     case EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax variableDeclarator }:
-                        return Ignores(variableDeclarator, recursion);
+                        return Ignores(variableDeclarator, recursion, context);
                 }
 
-                if (Ignores(candidate, recursion))
+                if (Ignores(candidate, recursion, context))
                 {
                     return true;
                 }
@@ -172,7 +172,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool Ignores(VariableDeclaratorSyntax declarator, Recursion recursion)
+    private static bool Ignores(VariableDeclaratorSyntax declarator, Recursion recursion, AnalyzerContext context)
     {
         if (recursion.SemanticModel.TryGetSymbol(declarator, recursion.CancellationToken, out ILocalSymbol? local))
         {
@@ -184,7 +184,7 @@ internal static partial class Disposable
             using var walker = UsagesWalker.Borrow(new LocalOrParameter(local), recursion.SemanticModel, recursion.CancellationToken);
             foreach (var usage in walker.Usages)
             {
-                if (!Ignores(usage, recursion))
+                if (!Ignores(usage, recursion, context))
                 {
                     return false;
                 }

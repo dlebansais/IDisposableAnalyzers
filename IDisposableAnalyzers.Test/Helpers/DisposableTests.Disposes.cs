@@ -33,7 +33,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("disposable = File.OpenRead(fileName)");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(false, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(false, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [TestCase("disposable.Dispose()")]
@@ -62,7 +62,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("disposable = File.OpenRead(fileName)");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("disposable");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -114,7 +114,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("disposable");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("disposable = File.OpenRead(fileName)");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -168,7 +168,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("stream = File.OpenRead(string.Empty)");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
 
         [Test]
@@ -192,7 +192,7 @@ namespace N
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindVariableDeclaration("var form = new Winform()");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out ILocalSymbol symbol));
-            Assert.AreEqual(true, Disposable.Disposes(symbol, semanticModel, CancellationToken.None));
+            Assert.AreEqual(true, Disposable.Disposes(symbol, new AnalyzerContext(semanticModel, compilation), CancellationToken.None));
         }
     }
 }

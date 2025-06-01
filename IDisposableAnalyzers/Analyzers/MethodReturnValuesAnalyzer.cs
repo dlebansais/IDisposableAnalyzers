@@ -41,7 +41,7 @@ internal class MethodReturnValuesAnalyzer : DiagnosticAnalyzer
 
         bool IsCachedOrInjected(ExpressionSyntax expression)
         {
-            return Disposable.IsCachedOrInjected(expression, expression, context.SemanticModel, context.CancellationToken);
+            return Disposable.IsCachedOrInjected(expression, expression, new AnalyzerContext(context), context.CancellationToken);
         }
 
         bool IsNop(ExpressionSyntax expression)

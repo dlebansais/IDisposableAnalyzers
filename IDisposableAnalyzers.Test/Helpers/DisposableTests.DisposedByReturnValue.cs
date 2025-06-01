@@ -40,7 +40,7 @@ namespace N
             var compilation = CSharpCompilation.Create("test", new[] { syntaxTree }, Settings.Default.MetadataReferences);
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var value = syntaxTree.FindArgument("File.OpenRead(string.Empty)");
-            Assert.AreEqual(true, Disposable.DisposedByReturnValue(value, semanticModel, CancellationToken.None, out _));
+            Assert.AreEqual(true, Disposable.DisposedByReturnValue(value, new AnalyzerContext(semanticModel, compilation), CancellationToken.None, out _));
         }
 
         [TestCase("new BinaryReader(stream)", true)]
@@ -92,8 +92,8 @@ namespace N
             var value = syntaxTree.FindParameter("stream");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out var symbol));
             Assert.AreEqual(true, LocalOrParameter.TryCreate(symbol, out var localOrParameter));
-            Assert.AreEqual(stores, Disposable.Stores(localOrParameter, semanticModel, CancellationToken.None, out var container));
-            Assert.AreEqual(stores, Disposable.DisposedByReturnValue(syntaxTree.FindArgument("stream"), semanticModel, CancellationToken.None, out _));
+            Assert.AreEqual(stores, Disposable.Stores(localOrParameter, new AnalyzerContext(semanticModel, compilation), CancellationToken.None, out var container));
+            Assert.AreEqual(stores, Disposable.DisposedByReturnValue(syntaxTree.FindArgument("stream"), new AnalyzerContext(semanticModel, compilation), CancellationToken.None, out _));
             if (stores)
             {
                 Assert.AreEqual("N.C.disposable", container.ToString());
@@ -126,8 +126,8 @@ namespace N
             var value = syntaxTree.FindParameter("handler");
             Assert.AreEqual(true, semanticModel.TryGetSymbol(value, CancellationToken.None, out var symbol));
             Assert.AreEqual(true, LocalOrParameter.TryCreate(symbol, out var localOrParameter));
-            Assert.AreEqual(stores, Disposable.Stores(localOrParameter, semanticModel, CancellationToken.None, out var container));
-            Assert.AreEqual(stores, Disposable.DisposedByReturnValue(syntaxTree.FindArgument("handler"), semanticModel, CancellationToken.None, out _));
+            Assert.AreEqual(stores, Disposable.Stores(localOrParameter, new AnalyzerContext(semanticModel, compilation), CancellationToken.None, out var container));
+            Assert.AreEqual(stores, Disposable.DisposedByReturnValue(syntaxTree.FindArgument("handler"), new AnalyzerContext(semanticModel, compilation), CancellationToken.None, out _));
             if (stores)
             {
                 Assert.AreEqual("N.C.disposable", container.ToString());

@@ -34,7 +34,7 @@ internal class AssignmentAnalyzer : DiagnosticAnalyzer
         {
             if (LocalOrParameter.TryCreate(assignedSymbol, out var localOrParameter) &&
                 Disposable.IsCreation(right, context.SemanticModel, context.CancellationToken) &&
-                Disposable.ShouldDispose(localOrParameter, context.SemanticModel, context.CancellationToken))
+                Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, assignment.GetLocation()));
             }
@@ -92,7 +92,7 @@ internal class AssignmentAnalyzer : DiagnosticAnalyzer
                     return false;
                 }
 
-                if (Disposable.IsAssignedWithInjected(fieldOrProperty.Symbol, assignment, context.SemanticModel, context.CancellationToken))
+                if (Disposable.IsAssignedWithInjected(fieldOrProperty.Symbol, assignment, new AnalyzerContext(context), context.CancellationToken))
                 {
                     return false;
                 }
@@ -104,7 +104,7 @@ internal class AssignmentAnalyzer : DiagnosticAnalyzer
             }
 
             if (AssignedLocal() is { } local &&
-                Disposable.DisposesAfter(local, assignment, context.SemanticModel, context.CancellationToken))
+                Disposable.DisposesAfter(local, assignment, new AnalyzerContext(context), context.CancellationToken))
             {
                 return false;
             }

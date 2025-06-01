@@ -73,12 +73,12 @@ internal class FieldAndPropertyDeclarationAnalyzer : DiagnosticAnalyzer
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP002DisposeMember, context.Node.GetLocation()));
                 }
             }
-            else if (Disposable.IsAnyCachedOrInjected(recursive, context.SemanticModel, context.CancellationToken) ||
+            else if (Disposable.IsAnyCachedOrInjected(recursive, new AnalyzerContext(context), context.CancellationToken) ||
                      IsMutableFromOutside(member.FieldOrProperty))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP008DoNotMixInjectedAndCreatedForMember, context.Node.GetLocation()));
             }
-            else if (!Disposable.StoresAny(recursive, member.FieldOrProperty.ContainingType, context.SemanticModel, context.CancellationToken))
+            else if (!Disposable.StoresAny(recursive, member.FieldOrProperty.ContainingType, new AnalyzerContext(context), context.CancellationToken))
             {
                 if (DisposeMethod.FindDisposeAsync(member.FieldOrProperty.ContainingType, context.Compilation, Search.TopLevel) is { } disposeAsync &&
                     !DisposableMember.IsDisposed(member.FieldOrProperty, disposeAsync, context.SemanticModel, context.CancellationToken))

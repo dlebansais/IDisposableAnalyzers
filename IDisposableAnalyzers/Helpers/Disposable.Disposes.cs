@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 internal static partial class Disposable
 {
-    internal static bool DisposesAfter(ILocalSymbol local, ExpressionSyntax location, SemanticModel semanticModel, CancellationToken cancellationToken)
+    internal static bool DisposesAfter(ILocalSymbol local, ExpressionSyntax location, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (local.TrySingleDeclaration(cancellationToken, out var declaration) &&
             declaration is { Parent: VariableDeclarationSyntax { Parent: UsingStatementSyntax _ } })
@@ -17,12 +17,12 @@ internal static partial class Disposable
             return true;
         }
 
-        using var recursion = Recursion.Borrow(local.ContainingType, semanticModel, cancellationToken);
+        using var recursion = Recursion.Borrow(local.ContainingType, context.SemanticModel, cancellationToken);
         using var walker = UsagesWalker.Borrow(new LocalOrParameter(local), recursion.SemanticModel, recursion.CancellationToken);
         foreach (var usage in walker.Usages)
         {
             if (location.IsExecutedBefore(usage).IsEither(ExecutedBefore.Yes, ExecutedBefore.Maybe) &&
-                Disposes(usage, recursion))
+                Disposes(usage, recursion, context))
             {
                 return true;
             }
@@ -31,7 +31,7 @@ internal static partial class Disposable
         return false;
     }
 
-    internal static bool Disposes(ILocalSymbol local, SemanticModel semanticModel, CancellationToken cancellationToken)
+    internal static bool Disposes(ILocalSymbol local, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (local.TrySingleDeclaration(cancellationToken, out var declaration))
         {
@@ -43,11 +43,11 @@ internal static partial class Disposable
             }
         }
 
-        using var recursion = Recursion.Borrow(local.ContainingType, semanticModel, cancellationToken);
+        using var recursion = Recursion.Borrow(local.ContainingType, context.SemanticModel, cancellationToken);
         using var walker = UsagesWalker.Borrow(new LocalOrParameter(local), recursion.SemanticModel, recursion.CancellationToken);
         foreach (var usage in walker.Usages)
         {
-            if (Disposes(usage, recursion))
+            if (Disposes(usage, recursion, context))
             {
                 return true;
             }
@@ -56,7 +56,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool Disposes<TSource, TSymbol, TNode>(Target<TSource, TSymbol, TNode> target, Recursion recursion)
+    private static bool Disposes<TSource, TSymbol, TNode>(Target<TSource, TSymbol, TNode> target, Recursion recursion, AnalyzerContext context)
         where TSource : SyntaxNode
         where TSymbol : class, ISymbol
         where TNode : SyntaxNode
@@ -66,7 +66,7 @@ internal static partial class Disposable
             using var walker = UsagesWalker.Borrow(target.Symbol, target.Declaration, recursion.SemanticModel, recursion.CancellationToken);
             foreach (var usage in walker.Usages)
             {
-                if (Disposes(usage, recursion))
+                if (Disposes(usage, recursion, context))
                 {
                     return true;
                 }
@@ -76,7 +76,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool Disposes(ExpressionSyntax candidate, Recursion recursion)
+    private static bool Disposes(ExpressionSyntax candidate, Recursion recursion, AnalyzerContext context)
     {
         return candidate switch
         {
@@ -88,7 +88,7 @@ internal static partial class Disposable
                 => true,
             { }
                 when Identity(candidate, recursion) is { } id &&
-                     Disposes(id, recursion)
+                     Disposes(id, recursion, context)
                 => true,
             { Parent: ConditionalAccessExpressionSyntax { WhenNotNull: InvocationExpressionSyntax invocation } }
                 => IsDisposeOrReturnValueDisposed(invocation),
@@ -102,25 +102,25 @@ internal static partial class Disposable
             { Parent: MemberAccessExpressionSyntax { Parent: InvocationExpressionSyntax invocation } }
                 => IsDisposeOrReturnValueDisposed(invocation),
             { Parent: ConditionalAccessExpressionSyntax parent }
-                => DisposedByReturnValue(parent, recursion, out var creation) &&
-               Disposes(creation, recursion),
+                => DisposedByReturnValue(parent, recursion, context, out var creation) &&
+               Disposes(creation, recursion, context),
             { Parent: MemberAccessExpressionSyntax parent }
-                => DisposedByReturnValue(parent, recursion, out var creation) &&
-               Disposes(creation, recursion),
+                => DisposedByReturnValue(parent, recursion, context, out var creation) &&
+               Disposes(creation, recursion, context),
             { Parent: AssignmentExpressionSyntax { Left: { } left } assignment }
                 when left == candidate
-                => Disposes(assignment, recursion),
+                => Disposes(assignment, recursion, context),
             { Parent: EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax variableDeclarator } }
                 when recursion.Target(variableDeclarator) is { } target
-                => Disposes(target, recursion),
+                => Disposes(target, recursion, context),
             { Parent: ArgumentSyntax { Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } } }
                 when Winform.IsComponentsAdd(invocation, recursion.SemanticModel, recursion.CancellationToken)
                 => true,
             { Parent: ArgumentSyntax argument }
                 when recursion.Target(argument) is { } target
-                => (DisposedByReturnValue(target, recursion, out var wrapper) &&
-                    Disposes(wrapper, recursion)) ||
-                   Disposes(target, recursion),
+                => (DisposedByReturnValue(target, recursion, context, out var wrapper) &&
+                    Disposes(wrapper, recursion, context)) ||
+                   Disposes(target, recursion, context),
             _ => false,
         };
 
@@ -131,8 +131,8 @@ internal static partial class Disposable
                 return true;
             }
 
-            return DisposedByReturnValue(invocation, recursion, out var creation) &&
-                   Disposes(creation, recursion);
+            return DisposedByReturnValue(invocation, recursion, context, out var creation) &&
+                   Disposes(creation, recursion, context);
         }
     }
 }

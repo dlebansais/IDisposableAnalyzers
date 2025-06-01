@@ -1,9 +1,9 @@
 # IDisposableAnalyzers
-Roslyn analyzers for IDisposable
+Roslyn analyzers for IDisposable.
 
 ## Using IDisposableAnalyzers
 
-The preferable way to use the analyzers is to add the nuget package [IDisposableAnalyzers](https://www.nuget.org/packages/IDisposableAnalyzers/)
+The preferable way to use the analyzers is to add the nuget package [IDisposableAnalyzers](https://www.nuget.org/packages/dlebansais.IDisposableAnalyzers/)
 to the project(s).
 
 The severity of individual rules may be configured using [rule set files](https://msdn.microsoft.com/en-us/library/dd264996.aspx)
@@ -19,12 +19,12 @@ IDisposableAnalyzers can be installed using:
 
 **Install using the command line:**
 ```bash
-paket add IDisposableAnalyzers --project <project>
+paket add dlebansais.IDisposableAnalyzers --project <project>
 ```
 
 or if you prefer NuGet
 ```bash
-Install-Package IDisposableAnalyzers
+Install-Package dlebansais.IDisposableAnalyzers
 ```
 
 ## Updating

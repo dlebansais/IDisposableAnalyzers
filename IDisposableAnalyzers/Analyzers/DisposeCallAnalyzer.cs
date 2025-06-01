@@ -37,7 +37,7 @@ internal class DisposeCallAnalyzer : DiagnosticAnalyzer
             !invocation.TryFirstAncestorOrSelf<AnonymousFunctionExpressionSyntax>(out _) &&
             call.FindDisposed(context.SemanticModel, context.CancellationToken) is { } disposed)
         {
-            if (Disposable.IsCachedOrInjectedOnly(disposed, invocation, context.SemanticModel, context.CancellationToken) &&
+            if (Disposable.IsCachedOrInjectedOnly(disposed, invocation, new AnalyzerContext(context), context.CancellationToken) &&
                 !StaticMemberInStaticContext(disposed, context) &&
                 NotLeaveOpen())
             {

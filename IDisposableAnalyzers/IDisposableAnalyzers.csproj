@@ -13,22 +13,25 @@
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
+  <!-- Specific to packing an analyzer -->
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
+    <PackageVersion>4.0.8.5</PackageVersion>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
+    <PackageReadmeFile>README-short.md</PackageReadmeFile>
+    <NoWarn>NU5128</NoWarn>
+  </PropertyGroup>
+
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\IDisposableAnalyzers.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <!-- Specific to packing an analyzer -->
   <PropertyGroup>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
-    <PackageReadmeFile>README-short.md</PackageReadmeFile>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <Version>4.0.8</Version>
+    <Version>4.0.8.5</Version>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>
@@ -53,6 +56,9 @@
   <ItemGroup>
     <None Update="tools\*" Pack="true" PackagePath="" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(OutputPath)\IDisposableAttributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(OutputPath)\IDisposableAttributes.dll" Pack="true" PackagePath="lib/netstandard2.0" Visible="false" />
+    <ProjectReference Include="..\IDisposableAttributes\IDisposableAttributes.csproj" />
     <TfmSpecificPackageFile Include="README-short.md" PackagePath="" />
   </ItemGroup>
 </Project>

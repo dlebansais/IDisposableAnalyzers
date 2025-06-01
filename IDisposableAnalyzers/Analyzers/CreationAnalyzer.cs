@@ -30,7 +30,7 @@ internal class CreationAnalyzer : DiagnosticAnalyzer
             ShouldCheck(context) is { } expression)
         {
             if (Disposable.IsCreation(expression, context.SemanticModel, context.CancellationToken) &&
-                Disposable.Ignores(expression, context.SemanticModel, context.CancellationToken))
+                Disposable.Ignores(expression, new AnalyzerContext(context), context.CancellationToken))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP004DoNotIgnoreCreated, context.Node.GetLocation()));
             }

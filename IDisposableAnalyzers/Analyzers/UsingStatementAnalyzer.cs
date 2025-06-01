@@ -31,7 +31,7 @@ internal class UsingStatementAnalyzer : DiagnosticAnalyzer
                     foreach (var declarator in variables)
                     {
                         if (declarator is { Initializer.Value: { } value } &&
-                            Disposable.IsCachedOrInjectedOnly(value, value, context.SemanticModel, context.CancellationToken))
+                            Disposable.IsCachedOrInjectedOnly(value, value, new AnalyzerContext(context), context.CancellationToken))
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, value.GetLocation()));
                         }
@@ -39,7 +39,7 @@ internal class UsingStatementAnalyzer : DiagnosticAnalyzer
 
                     break;
                 case { Expression: { } expression }
-                    when Disposable.IsCachedOrInjectedOnly(expression, expression, context.SemanticModel, context.CancellationToken):
+                    when Disposable.IsCachedOrInjectedOnly(expression, expression, new AnalyzerContext(context), context.CancellationToken):
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, usingStatement.Expression.GetLocation()));
 
                     break;
