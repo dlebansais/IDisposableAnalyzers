@@ -127,7 +127,7 @@ internal static partial class Disposable
                         return true;
                     }
 
-                    if (IsAcquireOwnership(parameter, context))
+                    if (IsAcquiredOwnership(parameter, context))
                     {
                         creation = objectCreation;
                         return true;

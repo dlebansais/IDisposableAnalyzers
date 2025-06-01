@@ -28,5 +28,10 @@
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="System.Reactive.Linq" Version="6.0.0" />
     <PackageReference Include="reactiveui" Version="19.5.1" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(PkgSystem_Text_Json)\lib\net6.0\System.Text.Json.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

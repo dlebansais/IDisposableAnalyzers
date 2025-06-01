@@ -1,7 +1,11 @@
 ﻿namespace IDisposableAnalyzers;
 
 using System;
+using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading;
 using Gu.Roslyn.AnalyzerExtensions;
 
@@ -11,6 +15,27 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 internal static partial class Disposable
 {
+    static Disposable()
+    {
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1031 // Do not catch general exception types
+        try
+        {
+            if (typeof(IDisposableAnalyzerOptions).Assembly.Location is string location &&
+                Path.GetDirectoryName(location) is string directory)
+            {
+                _ = Assembly.LoadFrom(Path.Combine(directory, "System.Text.Encodings.Web.dll"));
+                _ = Assembly.LoadFrom(Path.Combine(directory, "Microsoft.Bcl.AsyncInterfaces.dll"));
+                _ = Assembly.LoadFrom(Path.Combine(directory, "System.Text.Json.dll"));
+            }
+        }
+        catch
+        {
+        }
+#pragma warning restore CA1031 // Do not catch general exception types
+#pragma warning restore IDE0079 // Remove unnecessary suppression
+    }
+
     internal static bool IsCachedOrInjectedOnly(ExpressionSyntax value, ExpressionSyntax location, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (context.SemanticModel.TryGetSymbol(value, cancellationToken, out var symbol))
@@ -115,7 +140,7 @@ internal static partial class Disposable
 
         if (symbol is IParameterSymbol parameter)
         {
-            if (IsAcquireOwnership(parameter, context))
+            if (IsAcquiredOwnership(parameter, context))
             {
                 return false;
             }
@@ -162,15 +187,15 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool IsAcquireOwnership(IParameterSymbol parameter, AnalyzerContext context)
+    private static bool IsAcquiredOwnership(IParameterSymbol parameter, AnalyzerContext context)
     {
         var attributes = parameter.GetAttributes();
-        if (attributes.Any(a => IsAcquireOwnershipAttribute(a, context)))
+        if (attributes.Any(a => IsAcquiredOwnershipByAttribute(a, context)))
         {
             return true;
         }
 
-        if (IsAcquireOwnershipOption(parameter, context))
+        if (IsAcquiredOwnershipByOption(parameter, context))
         {
             return true;
         }
@@ -178,7 +203,7 @@ internal static partial class Disposable
         return false;
     }
 
-    private static bool IsAcquireOwnershipAttribute(AttributeData attributeData, AnalyzerContext context)
+    private static bool IsAcquiredOwnershipByAttribute(AttributeData attributeData, AnalyzerContext context)
     {
         if (attributeData.AttributeClass is not INamedTypeSymbol attributeSymbol)
         {
@@ -190,20 +215,30 @@ internal static partial class Disposable
         return SymbolEqualityComparer.Default.Equals(attributeSymbol, expectedTypeSymbol);
     }
 
-    private static bool IsAcquireOwnershipOption(IParameterSymbol parameter, AnalyzerContext context)
+    private static bool IsAcquiredOwnershipByOption(IParameterSymbol parameter, AnalyzerContext context)
+    {
+        if (ParseProjectOptions(context) is IDisposableAnalyzerOptions projectOptions)
+        {
+            return IsAcquiredOwnershipByOption(parameter, projectOptions);
+        }
+
+        if (ParseJsonFile(context) is IDisposableAnalyzerOptions jsonOptions)
+        {
+            return IsAcquiredOwnershipByOption(parameter, jsonOptions);
+        }
+
+        return false;
+    }
+
+    private static IDisposableAnalyzerOptions? ParseProjectOptions(AnalyzerContext context)
     {
         AnalyzerConfigOptions globalOptions = context.Options.AnalyzerConfigOptionsProvider.GetOptions(context.Compilation.SyntaxTrees.First());
         if (!globalOptions.TryGetValue("build_property.IDisposableAnalyzer_KnownOwnershipTransfers", out string? knownOwnershipTransfers))
         {
-            return false;
+            return null;
         }
 
-        int expectedParameterOrdinal = parameter.Ordinal;
-        string expectedSymbolName = parameter.ContainingSymbol.ToString()!;
-        string expectedTypeName = parameter.ContainingType.Name;
-        string expectedNamespaceName = parameter.ContainingNamespace.Name;
-        string expectedAssemblyName = parameter.ContainingAssembly.Name;
-
+        OwnershipTransferOptionCollection ownershipTransferOptions = new();
         string[] lines = knownOwnershipTransfers.Split('|');
 
         foreach (var line in lines)
@@ -297,11 +332,43 @@ internal static partial class Disposable
                 throw new InvalidOperationException($"Syntax error: missing assembly in '{line}'.");
             }
 
-            if (parameterOrdinal == expectedParameterOrdinal &&
-                symbolName == expectedSymbolName &&
-                typeName == expectedTypeName &&
-                namespaceName == expectedNamespaceName &&
-                assemblyName == expectedAssemblyName)
+            ownershipTransferOptions.Add(new OwnershipTransferOption(parameterOrdinal, symbolName, typeName, namespaceName, assemblyName));
+        }
+
+        return new IDisposableAnalyzerOptions() { OwnershipTransferOptions = ownershipTransferOptions };
+    }
+
+    private static IDisposableAnalyzerOptions? ParseJsonFile(AnalyzerContext context)
+    {
+        ImmutableArray<AdditionalText> additionalFiles = context.Options.AdditionalFiles;
+        foreach (AdditionalText additionalFile in additionalFiles)
+        {
+            if (Path.GetFileName(additionalFile.Path) is string fileName && fileName.Equals("IDisposableAnalyzer.json", StringComparison.OrdinalIgnoreCase))
+            {
+                FileStream fileStream = new(additionalFile.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                IDisposableAnalyzerOptions? options = JsonSerializer.Deserialize<IDisposableAnalyzerOptions>(fileStream);
+                return options;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsAcquiredOwnershipByOption(IParameterSymbol parameter, IDisposableAnalyzerOptions options)
+    {
+        int expectedParameterOrdinal = parameter.Ordinal;
+        string expectedSymbolName = parameter.ContainingSymbol.ToString()!;
+        string expectedTypeName = parameter.ContainingType.Name;
+        string expectedNamespaceName = parameter.ContainingNamespace.Name;
+        string expectedAssemblyName = parameter.ContainingAssembly.Name;
+
+        foreach (OwnershipTransferOption option in options.OwnershipTransferOptions)
+        {
+            if (option.ParameterOrdinal == expectedParameterOrdinal &&
+                option.SymbolName == expectedSymbolName &&
+                option.TypeName == expectedTypeName &&
+                option.NamespaceName == expectedNamespaceName &&
+                option.AssemblyName == expectedAssemblyName)
             {
                 return true;
             }
