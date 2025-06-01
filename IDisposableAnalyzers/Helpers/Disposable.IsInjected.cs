@@ -217,125 +217,12 @@ internal static partial class Disposable
 
     private static bool IsAcquiredOwnershipByOption(IParameterSymbol parameter, AnalyzerContext context)
     {
-        if (ParseProjectOptions(context) is IDisposableAnalyzerOptions projectOptions)
-        {
-            return IsAcquiredOwnershipByOption(parameter, projectOptions);
-        }
-
         if (ParseJsonFile(context) is IDisposableAnalyzerOptions jsonOptions)
         {
             return IsAcquiredOwnershipByOption(parameter, jsonOptions);
         }
 
         return false;
-    }
-
-    private static IDisposableAnalyzerOptions? ParseProjectOptions(AnalyzerContext context)
-    {
-        AnalyzerConfigOptions globalOptions = context.Options.AnalyzerConfigOptionsProvider.GetOptions(context.Compilation.SyntaxTrees.First());
-        if (!globalOptions.TryGetValue("build_property.IDisposableAnalyzer_KnownOwnershipTransfers", out string? knownOwnershipTransfers))
-        {
-            return null;
-        }
-
-        OwnershipTransferOptionCollection ownershipTransferOptions = new();
-        string[] lines = knownOwnershipTransfers.Split('|');
-
-        foreach (var line in lines)
-        {
-            string trimmed = line.Trim();
-            if (trimmed.Length == 0)
-            {
-                continue;
-            }
-
-            string[] parts = trimmed.Split('-');
-
-            int parameterOrdinal = -1;
-            string symbolName = string.Empty;
-            string typeName = string.Empty;
-            string namespaceName = string.Empty;
-            string assemblyName = string.Empty;
-
-            foreach (var part in parts)
-            {
-                string[] keyValuePair = part.Split('=');
-                if (keyValuePair.Length != 2)
-                {
-                    throw new InvalidOperationException($"Syntax error: '{part}' invalid in '{line}'.");
-                }
-
-                string key = keyValuePair[0].Trim();
-                if (key.Length == 0)
-                {
-                    throw new InvalidOperationException($"Syntax error: key missing in '{part}' in '{line}'.");
-                }
-
-                string value = keyValuePair[1].Trim();
-                if (value.Length == 0)
-                {
-                    throw new InvalidOperationException($"Syntax error: value missing in '{part}' in '{line}'.");
-                }
-
-                switch (key)
-                {
-                    case "parameter":
-                        if (int.TryParse(value, out int intValue))
-                        {
-                            parameterOrdinal = intValue;
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Syntax error: invalid value in '{part}' (must be 0 or greater) in '{line}'.");
-                        }
-
-                        break;
-                    case "symbol":
-                        symbolName = value;
-                        break;
-                    case "type":
-                        typeName = value;
-                        break;
-                    case "namespace":
-                        namespaceName = value;
-                        break;
-                    case "assembly":
-                        assemblyName = value;
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Syntax error: unknown key '{key}' in '{part}' in '{line}'.");
-                }
-            }
-
-            if (parameterOrdinal < 0)
-            {
-                throw new InvalidOperationException($"Syntax error: missing parameter in '{line}'.");
-            }
-
-            if (symbolName.Length == 0)
-            {
-                throw new InvalidOperationException($"Syntax error: missing symbol in '{line}'.");
-            }
-
-            if (typeName.Length == 0)
-            {
-                throw new InvalidOperationException($"Syntax error: missing type in '{line}'.");
-            }
-
-            if (namespaceName.Length == 0)
-            {
-                throw new InvalidOperationException($"Syntax error: missing namespace in '{line}'.");
-            }
-
-            if (assemblyName.Length == 0)
-            {
-                throw new InvalidOperationException($"Syntax error: missing assembly in '{line}'.");
-            }
-
-            ownershipTransferOptions.Add(new OwnershipTransferOption(parameterOrdinal, symbolName, typeName, namespaceName, assemblyName));
-        }
-
-        return new IDisposableAnalyzerOptions() { OwnershipTransferOptions = ownershipTransferOptions };
     }
 
     private static IDisposableAnalyzerOptions? ParseJsonFile(AnalyzerContext context)
@@ -345,7 +232,7 @@ internal static partial class Disposable
         {
             if (Path.GetFileName(additionalFile.Path) is string fileName && fileName.Equals("IDisposableAnalyzer.json", StringComparison.OrdinalIgnoreCase))
             {
-                FileStream fileStream = new(additionalFile.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using FileStream fileStream = new(additionalFile.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
                 IDisposableAnalyzerOptions? options = JsonSerializer.Deserialize<IDisposableAnalyzerOptions>(fileStream);
                 return options;
             }

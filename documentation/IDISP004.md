@@ -47,6 +47,10 @@ public sealed class Foo
 }
 ```
 
+### If the value ownership is transferred
+
+See [IDISP007](IDISP007.md) for more information on how to transfer ownership of an `IDisposable` instance.
+
 <!-- start generated config severity -->
 ## Configure severity
 
