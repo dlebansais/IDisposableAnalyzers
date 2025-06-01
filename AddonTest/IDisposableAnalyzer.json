@@ -1,7 +1,7 @@
 {
   "ownership_transfer_options": [
     {
-      "parameter": 1,
+      "parameter": 0,
       "symbol": "AddonTest.B.B(AddonTest.A)",
       "type": "B",
       "namespace": "AddonTest",
