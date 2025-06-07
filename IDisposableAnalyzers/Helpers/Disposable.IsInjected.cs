@@ -11,7 +11,6 @@ using Gu.Roslyn.AnalyzerExtensions;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 internal static partial class Disposable
 {
@@ -230,7 +229,7 @@ internal static partial class Disposable
         ImmutableArray<AdditionalText> additionalFiles = context.Options.AdditionalFiles;
         foreach (AdditionalText additionalFile in additionalFiles)
         {
-            if (Path.GetFileName(additionalFile.Path) is string fileName && fileName.Equals("IDisposableAnalyzer.json", StringComparison.OrdinalIgnoreCase))
+            if (Path.GetFileName(additionalFile.Path) is string fileName && fileName.Equals("IDisposableAnalyzers.json", StringComparison.OrdinalIgnoreCase))
             {
                 using FileStream fileStream = new(additionalFile.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
                 IDisposableAnalyzerOptions? options = JsonSerializer.Deserialize<IDisposableAnalyzerOptions>(fileStream);

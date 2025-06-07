@@ -10,4 +10,14 @@ public static class Helper
         return new B(new A());
 #pragma warning restore CA2000 // Dispose objects before losing scope
     }
+
+    public static IDisposable CreateD()
+    {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        D instance = new();
+        instance.Init(new C());
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        return instance;
+    }
 }

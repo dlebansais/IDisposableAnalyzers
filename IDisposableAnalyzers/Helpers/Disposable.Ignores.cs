@@ -77,7 +77,7 @@ internal static partial class Disposable
                 => Ignores(tuple, recursion, context),
             { Parent: ArgumentSyntax argument }
                 when recursion.Target(argument) is { } target
-                => Ignores(target, recursion, context),
+                => Ignores(target, recursion, context, recursion.CancellationToken),
             { Parent: MemberAccessExpressionSyntax _ }
                 => WrappedAndIgnored(),
             { Parent: ConditionalAccessExpressionSyntax _ }
@@ -99,7 +99,7 @@ internal static partial class Disposable
         }
     }
 
-    private static bool Ignores(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion, AnalyzerContext context)
+    private static bool Ignores(Target<ArgumentSyntax, IParameterSymbol, BaseMethodDeclarationSyntax> target, Recursion recursion, AnalyzerContext context, CancellationToken cancellationToken)
     {
         if (target.Symbol.Type.MetadataName is "TestDelegate" or "AsyncTestDelegate")
         {
@@ -136,6 +136,13 @@ internal static partial class Disposable
                     case SyntaxKind.Argument:
                         // Stopping analysis here assuming it is handled
                         return false;
+                }
+
+                if (context.SemanticModel.TryGetSymbol(candidate, cancellationToken, out var symbol) &&
+                    symbol is IParameterSymbol parameter &&
+                    IsAcquiredOwnership(parameter, context))
+                {
+                    return false;
                 }
 
                 switch (candidate.Parent)

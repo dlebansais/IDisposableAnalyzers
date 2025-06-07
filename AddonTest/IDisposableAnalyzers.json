@@ -6,6 +6,13 @@
       "type": "B",
       "namespace": "AddonTest",
       "assembly": "AddonTest"
+    },
+    {
+      "parameter": 0,
+      "symbol": "AddonTest.D.Init(AddonTest.C)",
+      "type": "D",
+      "namespace": "AddonTest",
+      "assembly": "AddonTest"
     }
   ]
 }
