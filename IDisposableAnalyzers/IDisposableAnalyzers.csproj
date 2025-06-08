@@ -17,7 +17,7 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
-    <PackageVersion>4.0.8.9</PackageVersion>
+    <PackageVersion>4.0.8.10</PackageVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
@@ -38,7 +38,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.8.9</Version>
+    <Version>4.0.8.10</Version>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>

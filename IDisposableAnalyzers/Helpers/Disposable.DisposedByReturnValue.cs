@@ -1,5 +1,6 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -63,16 +64,22 @@ internal static partial class Disposable
     {
         switch (target)
         {
-            case { Symbol: { ContainingSymbol: IMethodSymbol constructor } parameter, Source.Parent: ArgumentListSyntax { Parent: ObjectCreationExpressionSyntax { Type: { } type } objectCreation } }:
-                if (type == KnownSymbols.SingleAssignmentDisposable ||
-                    type == KnownSymbols.RxDisposable ||
-                    type == KnownSymbols.CompositeDisposable)
+            case { Symbol: { ContainingSymbol: IMethodSymbol constructor } parameter, Source.Parent: ArgumentListSyntax { Parent: BaseObjectCreationExpressionSyntax objectCreation } }:
+
+                if (objectCreation is ObjectCreationExpressionSyntax explicitObjectCreation)
                 {
-                    creation = objectCreation;
-                    return true;
+                    TypeSyntax type = explicitObjectCreation.Type;
+
+                    if (type == KnownSymbols.SingleAssignmentDisposable ||
+                        type == KnownSymbols.RxDisposable ||
+                        type == KnownSymbols.CompositeDisposable)
+                    {
+                        creation = objectCreation;
+                        return true;
+                    }
                 }
 
-                if (Disposable.IsAssignableFrom(target.Symbol.ContainingType, recursion.SemanticModel.Compilation) ||
+                if (IsAssignableFrom(target.Symbol.ContainingType, recursion.SemanticModel.Compilation) ||
                     target.Symbol.ContainingType.IsAssignableTo(KnownSymbols.IAsyncDisposable, recursion.SemanticModel.Compilation))
                 {
                     if (constructor.TryFindParameter("leaveOpen", out var leaveOpenParameter))
@@ -133,7 +140,7 @@ internal static partial class Disposable
                         return true;
                     }
 
-                    static bool? EffectiveValue(ObjectCreationExpressionSyntax objectCreation, IParameterSymbol parameter)
+                    static bool? EffectiveValue(BaseObjectCreationExpressionSyntax objectCreation, IParameterSymbol parameter)
                     {
                         if (objectCreation.TryFindArgument(parameter, out var leaveOpenArgument))
                         {
@@ -150,15 +157,22 @@ internal static partial class Disposable
                 }
 
                 break;
-            case { Symbol.ContainingSymbol: IMethodSymbol method, Source.Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } }:
+            case { Symbol: { ContainingSymbol: IMethodSymbol method } parameter, Source.Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } }:
+
                 if (method == KnownSymbols.Task.FromResult)
                 {
                     creation = invocation;
                     return true;
                 }
 
-                if (Disposable.IsAssignableFrom(method.ReturnType, recursion.SemanticModel.Compilation) &&
+                if (IsAssignableFrom(method.ReturnType, recursion.SemanticModel.Compilation) &&
                     DisposedByReturnValue(target, recursion, context))
+                {
+                    creation = invocation;
+                    return true;
+                }
+
+                if (IsAcquiredOwnership(parameter, context))
                 {
                     creation = invocation;
                     return true;
@@ -186,7 +200,7 @@ internal static partial class Disposable
                 return false;
             case IMethodSymbol { ReturnType: { } returnType, DeclaringSyntaxReferences.Length: 0 }:
                 // we assume here, not sure it is the best assumption.
-                return Disposable.IsAssignableFrom(returnType, recursion.SemanticModel.Compilation);
+                return IsAssignableFrom(returnType, recursion.SemanticModel.Compilation);
             case IMethodSymbol { IsExtensionMethod: true, ReducedFrom: { } reducedFrom }
                  when reducedFrom.Parameters.TryFirst(out var parameter):
                 return DisposedByReturnValue(Target.Create(target.Source, parameter, target.Declaration), recursion, context);
