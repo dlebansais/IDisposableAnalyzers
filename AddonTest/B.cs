@@ -1,20 +1,24 @@
 ﻿namespace AddonTest;
 
-internal sealed class B(A input) : IDisposable
+internal sealed class B(A a, bool leaveOpen = false) : IDisposable
 {
-    private bool disposedValue;
-    private A class1 = input;
+    private A _a = a;
+    private bool _leaveOpen = leaveOpen;
+    private bool _isDisposed;
 
     private void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_isDisposed)
         {
             if (disposing)
             {
-                class1?.Dispose();
+                if (!_leaveOpen)
+                {
+                    _a?.Dispose();
+                }
             }
 
-            disposedValue = true;
+            _isDisposed = true;
         }
     }
 

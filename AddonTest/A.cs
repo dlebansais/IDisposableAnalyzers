@@ -2,17 +2,19 @@
 
 internal sealed class A : IDisposable
 {
-    private bool disposedValue;
+    private Mutex _mutex = new Mutex();
+    private bool _isDisposed;
 
     private void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_isDisposed)
         {
             if (disposing)
             {
+                _mutex?.Dispose();
             }
 
-            disposedValue = true;
+            _isDisposed = true;
         }
     }
 
