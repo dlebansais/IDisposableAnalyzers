@@ -31,7 +31,7 @@ There are two possible situations: when you can modify the source code, and when
 
 First way (constructors only): passing a new parameter called `leaveOpen` or `disposeHandler`. The class code should dispose of the provided instance only when `leaveOpen` is `false` or `disposeHandler` is `true`, respectively. See this [StreamReader constructor](https://learn.microsoft.com/en-us/dotnet/api/system.io.streamreader.-ctor?view=net-9.0#system-io-streamreader-ctor(system-io-stream-system-text-encoding-system-boolean-system-int32-system-boolean)) and this [HttpClient constructor](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.-ctor?view=net-9.0#system-net-http-httpclient-ctor(system-net-http-httpmessagehandler-system-boolean)) for examples of usage.
 
-Second way: add the `[IDisposableAnalyzers.AcquireOwnership]` attribute to the parameter for which the class is acquiring ownership.
+Second way: add the `[IDisposableAnalyzers.AcquireOwnership]` attribute to the parameter for which the class is acquiring ownership. This attribute is defined in the [dlebansais/IDisposableAnalyzers.Attributes](https://www.nuget.org/packages/dlebansais.IDisposableAnalyzers.Attributes) package.
 
 Example:
 ```csharp

@@ -15,7 +15,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="dlebansais.IDisposableAnalyzers" Version="4.0.8.10" />
+    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.11" />
+    <PackageReference Include="dlebansais.IDisposableAnalyzers" Version="4.0.8.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit.Analyzers" Version="4.3.0">

@@ -14,10 +14,18 @@ public static class Helper
 
     public static IDisposable CreateD()
     {
-        D d = new();
         C c = new();
+        D d = new();
         d.Init(c);
 
         return d;
+    }
+
+    public static IDisposable CreateF()
+    {
+        E e1 = new();
+        E e2 = new();
+        F f = new(e1, e2);
+        return f;
     }
 }

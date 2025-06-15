@@ -14,31 +14,22 @@
   </PropertyGroup>
 
   <!-- Specific to packing an analyzer -->
+  <!-- But we use create-package.bat instead -->
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
-    <PackageVersion>4.0.8.10</PackageVersion>
+    <PackageVersion>4.0.8.11</PackageVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
     <PackageReadmeFile>README-short.md</PackageReadmeFile>
     <NoWarn>NU5128</NoWarn>
   </PropertyGroup>
-
-  <!-- 
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\IDisposableAnalyzers.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  -->
-
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\IDisposableAnalyzers.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.8.10</Version>
+    <Version>4.0.8.11</Version>
+    <AssemblyVersion>4.0.8.11</AssemblyVersion>
+    <FileVersion>4.0.8.11</FileVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>
@@ -48,9 +39,10 @@
     <RepositoryUrl>https://github.com/dlebansais/IDisposableAnalyzers</RepositoryUrl>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\IDisposableAttributes\IDisposableAttributes.csproj" />
-  </ItemGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\IDisposableAnalyzers.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Gu.Analyzers" Version="2.0.3" PrivateAssets="all" />
@@ -61,7 +53,10 @@
 
   <ItemGroup>
     <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
-    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
+    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.11" Condition="'$(Configuration)'=='Debug'" />
+    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.11" Condition="'$(Configuration)'!='Debug'" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" Condition="'$(Configuration)'=='Debug'" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" Condition="'$(Configuration)'!='Debug'" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Encodings.Web" Version="6.0.1" GeneratePathProperty="true" />
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
@@ -83,4 +78,21 @@
     <None Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SolutionDir)'!='*Undefined*' And '$(TargetFramework)'=='netstandard2.0'">
+    <ItemGroup>
+      <None Remove="@(None)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)'=='Debug'">
+      <None Include="$(TargetDir)$(ProjectName).dll" />
+      <None Include="$(TargetDir)$(ProjectName).pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
+
+    <ItemGroup Condition="'$(Configuration)'=='Release'">
+      <None Include="$(TargetDir)$(ProjectName).dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Release'" />
+  </Target>
 </Project>
