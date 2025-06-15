@@ -7,6 +7,9 @@ using System.Text.Json.Serialization;
 
 public class IDisposableAnalyzerOptions
 {
+    [JsonPropertyName("debug_file_path")]
+    public string? DebugFilePath { get; set; }
+
     [JsonPropertyName("ownership_transfer_options")]
     public OwnershipTransferOptionCollection OwnershipTransferOptions { get; set; } = new();
 }

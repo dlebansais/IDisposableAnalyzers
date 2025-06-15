@@ -1,4 +1,6 @@
-﻿namespace IDisposableAnalyzers;
+﻿#pragma warning disable SA1116 // Split parameters should start on line after declaration
+
+namespace IDisposableAnalyzers;
 
 using System;
 using System.Collections.Immutable;
@@ -243,23 +245,74 @@ internal static partial class Disposable
     private static bool IsAcquiredOwnershipByOption(IParameterSymbol parameter, IDisposableAnalyzerOptions options)
     {
         int expectedParameterOrdinal = parameter.Ordinal;
-        string expectedSymbolName = parameter.ContainingSymbol.ToString()!;
-        string expectedTypeName = parameter.ContainingType.Name;
-        string expectedNamespaceName = parameter.ContainingNamespace.Name;
-        string expectedAssemblyName = parameter.ContainingAssembly.Name;
 
-        foreach (OwnershipTransferOption option in options.OwnershipTransferOptions)
+        if (parameter.ContainingSymbol.ToString() is string expectedSymbolName)
         {
-            if (option.ParameterOrdinal == expectedParameterOrdinal &&
-                option.SymbolName == expectedSymbolName &&
-                option.TypeName == expectedTypeName &&
-                option.NamespaceName == expectedNamespaceName &&
-                option.AssemblyName == expectedAssemblyName)
+            string expectedTypeName = parameter.ContainingType.Name;
+            string expectedNamespaceName = parameter.ContainingNamespace.Name;
+            string expectedAssemblyName = parameter.ContainingAssembly.Name;
+
+            foreach (OwnershipTransferOption option in options.OwnershipTransferOptions)
             {
-                return true;
+                if (IsOwnershipTransferMatch(expectedParameterOrdinal,
+                                             expectedSymbolName,
+                                             expectedTypeName,
+                                             expectedNamespaceName,
+                                             option.AssemblyName,
+                                             option,
+                                             options.DebugFilePath))
+                {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private static bool IsOwnershipTransferMatch(int expectedParameterOrdinal,
+                                                 string expectedSymbolName,
+                                                 string expectedTypeName,
+                                                 string expectedNamespaceName,
+                                                 string expectedAssemblyName,
+                                                 OwnershipTransferOption option,
+                                                 string? debugFilePath)
+    {
+        bool isParameterOrdinalMatch = option.ParameterOrdinal == expectedParameterOrdinal;
+        bool isSymbolNameMatch = option.SymbolName.Replace(", ", ",") == expectedSymbolName.Replace(", ", ",");
+        bool isTypeNameMatch = option.TypeName == expectedTypeName;
+        bool isNamespaceNameMatch = option.NamespaceName.EndsWith(expectedNamespaceName, StringComparison.Ordinal);
+        bool isAssemblyNameMatch = expectedAssemblyName.StartsWith(option.AssemblyName, StringComparison.Ordinal);
+
+        if (debugFilePath is not null)
+        {
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1031 // Do not catch general exception types
+            try
+            {
+                using FileStream fileStream = new(debugFilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+                using StreamWriter writer = new(fileStream);
+                writer.WriteLine(@$"{DateTime.Now}
+'{expectedParameterOrdinal}' vs '{option.ParameterOrdinal}' ({OkNotOk(isParameterOrdinalMatch)})
+'{expectedSymbolName}' vs '{option.SymbolName}' ({OkNotOk(isParameterOrdinalMatch)})
+'{expectedTypeName}' vs '{option.TypeName}' ({OkNotOk(isParameterOrdinalMatch)})
+'{expectedNamespaceName}' vs '{option.NamespaceName}' ({OkNotOk(isParameterOrdinalMatch)})
+'{expectedAssemblyName}' vs '{option.AssemblyName}' ({OkNotOk(isParameterOrdinalMatch)})
+");
+            }
+            catch
+            {
+            }
+#pragma warning restore CA1031 // Do not catch general exception types
+#pragma warning restore IDE0079 // Remove unnecessary suppression
+        }
+
+        return isParameterOrdinalMatch &&
+               isSymbolNameMatch &&
+               isTypeNameMatch &&
+               isNamespaceNameMatch &&
+               isAssemblyNameMatch;
+
+        static string OkNotOk(bool ok) => ok ? "OK" : "Not OK";
     }
 }

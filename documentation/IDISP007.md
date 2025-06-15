@@ -104,6 +104,16 @@ Next, add the following lines to your project to make the configuration file vis
 
 The example above assumes the configuration file is in the same directory as the project file.
 
+To help debug the configuration, add the following line in the configuration file:
+
+```json
+{
+  "debug_file_path": <path to a text file>
+}
+```
+
+The analyzer will write down comparisons between expected vs configured to help you find typos. Do not include the `debug_file_path` in the final configuration file.
+
 <!-- start generated config severity -->
 ## Configure severity
 
