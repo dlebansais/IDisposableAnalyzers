@@ -1,5 +1,6 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -10,28 +11,31 @@ internal static class Json
     private static int lockCount;
 
     /// <summary>
-    /// Loads the System.Text.Json assembly if the current assembly is being compiled by VBCSCompiler.
+    /// Manually loads the System.Text.Json assembly from the package folder if the current assembly is executing in the context of VBCSCompiler.
     /// Loads it once to avoid multiple loads in a single process.
     /// </summary>
     internal static void LoadJsonAssembly()
     {
-        Assembly executingAssembly = Assembly.GetExecutingAssembly();
-        if (executingAssembly.Location.Contains("VBCSCompiler") &&
-            Interlocked.CompareExchange(ref lockCount, 1, 0) == 0)
+        if (Interlocked.CompareExchange(ref lockCount, 1, 0) == 0)
         {
-#if DEBUG
-            string configuration = "Debug";
-#else
-            string configuration = "Release";
-#endif
-
-            // We rely on the location of this source file to find the assembly path since we're running in the context of a compilation.
-            string rootFolder = GetRootFolder();
-            string path = Path.Combine(rootFolder, $@"bin\{configuration}\netstandard2.0\System.Text.Json.dll");
-            _ = Assembly.LoadFrom(path);
+            Assembly executingAssembly = Assembly.GetExecutingAssembly();
+            if (Path.GetDirectoryName(executingAssembly.Location) is string executingFolder)
+            {
+                string executingFile = Path.Combine(executingFolder, "System.Text.Json.dll");
+                if (!File.Exists(executingFile))
+                {
+                    AssemblyName assemblyName = executingAssembly.GetName();
+                    if (assemblyName.Version is Version version)
+                    {
+                        string userFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        string path = $@"{userFolder}\.nuget\packages\dlebansais.idisposableanalyzers\{version}\analyzers\dotnet\cs\System.Text.Json.dll";
+                        if (File.Exists(path))
+                        {
+                            _ = Assembly.LoadFrom(path);
+                        }
+                    }
+                }
+            }
         }
     }
-
-    private static string GetRootFolder([CallerFilePath] string callerFilePath = "")
-        => Path.GetDirectoryName(Path.GetDirectoryName(callerFilePath))!;
 }

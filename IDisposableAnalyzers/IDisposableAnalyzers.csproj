@@ -18,7 +18,7 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
-    <PackageVersion>4.0.8.14</PackageVersion>
+    <PackageVersion>4.0.8.15</PackageVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
@@ -27,9 +27,9 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.8.14</Version>
-    <AssemblyVersion>4.0.8.14</AssemblyVersion>
-    <FileVersion>4.0.8.14</FileVersion>
+    <Version>4.0.8.15</Version>
+    <AssemblyVersion>4.0.8.15</AssemblyVersion>
+    <FileVersion>4.0.8.15</FileVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>
@@ -90,6 +90,7 @@
       <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
+    <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" Condition="'$(Configuration)'=='Debug'" />
 
     <!-- An analyzer must be packaged with its dependencies -->
     <ItemGroup Condition="'$(Configuration)'=='Release'">
@@ -100,8 +101,7 @@
       <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Release'" />
+    <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget\" Condition="'$(Configuration)'=='Release'" />
 
-    
-    <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" />
   </Target>
 </Project>

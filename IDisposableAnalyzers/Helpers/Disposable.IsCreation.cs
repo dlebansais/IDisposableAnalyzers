@@ -158,9 +158,14 @@ internal static partial class Disposable
             return true;
         }
 
-        if (candidate.Parent is ArgumentSyntax arg && semanticModel.GetSymbolInfo(arg.Expression, cancellationToken).Symbol is IMethodSymbol { IsAbstract: true } methodSymbol && IsAssignableFrom(methodSymbol.ReturnType, semanticModel.Compilation))
+        if (candidate.Parent is ArgumentSyntax arg)
         {
-            return true;
+            var correctSemanticModel = semanticModel.Compilation.GetSemanticModel(arg.SyntaxTree);
+
+            if (correctSemanticModel.GetSymbolInfo(arg.Expression, cancellationToken).Symbol is IMethodSymbol { IsAbstract: true } methodSymbol && IsAssignableFrom(methodSymbol.ReturnType, correctSemanticModel.Compilation))
+            {
+                return true;
+            }
         }
 
         using var recursive = RecursiveValues.Borrow(new[] { candidate }, semanticModel, cancellationToken);
