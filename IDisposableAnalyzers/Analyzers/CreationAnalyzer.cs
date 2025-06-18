@@ -1,7 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
 using System.Collections.Immutable;
-
+using System.IO;
+using System.Reflection;
 using Gu.Roslyn.AnalyzerExtensions;
 
 using Microsoft.CodeAnalysis;
@@ -12,6 +13,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 internal class CreationAnalyzer : DiagnosticAnalyzer
 {
+    static CreationAnalyzer()
+    {
+        Json.LoadJsonAssembly();
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         Descriptors.IDISP004DoNotIgnoreCreated,
         Descriptors.IDISP014UseSingleInstanceOfHttpClient);

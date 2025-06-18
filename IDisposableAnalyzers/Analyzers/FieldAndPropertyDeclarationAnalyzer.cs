@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Immutable;
-
 using Gu.Roslyn.AnalyzerExtensions;
 
 using Microsoft.CodeAnalysis;
@@ -13,6 +12,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 internal class FieldAndPropertyDeclarationAnalyzer : DiagnosticAnalyzer
 {
+    static FieldAndPropertyDeclarationAnalyzer()
+    {
+        Json.LoadJsonAssembly();
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         Descriptors.IDISP002DisposeMember,
         Descriptors.IDISP006ImplementIDisposable,

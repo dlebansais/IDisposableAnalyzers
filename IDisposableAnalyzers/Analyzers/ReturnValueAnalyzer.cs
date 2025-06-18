@@ -13,6 +13,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 internal class ReturnValueAnalyzer : DiagnosticAnalyzer
 {
+    static ReturnValueAnalyzer()
+    {
+        Json.LoadJsonAssembly();
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         Descriptors.IDISP005ReturnTypeShouldBeIDisposable,
         Descriptors.IDISP011DontReturnDisposed,

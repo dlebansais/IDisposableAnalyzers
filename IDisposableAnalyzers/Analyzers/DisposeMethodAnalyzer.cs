@@ -13,6 +13,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 internal class DisposeMethodAnalyzer : DiagnosticAnalyzer
 {
+    static DisposeMethodAnalyzer()
+    {
+        Json.LoadJsonAssembly();
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         Descriptors.IDISP009IsIDisposable,
         Descriptors.IDISP010CallBaseDispose,

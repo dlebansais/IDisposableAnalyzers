@@ -12,6 +12,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 internal class LocalDeclarationAnalyzer : DiagnosticAnalyzer
 {
+    static LocalDeclarationAnalyzer()
+    {
+        Json.LoadJsonAssembly();
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         Descriptors.IDISP001DisposeCreated,
         Descriptors.IDISP007DoNotDisposeInjected);

@@ -18,7 +18,7 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
-    <PackageVersion>4.0.8.11</PackageVersion>
+    <PackageVersion>4.0.8.14</PackageVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
@@ -27,9 +27,9 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.8.11</Version>
-    <AssemblyVersion>4.0.8.11</AssemblyVersion>
-    <FileVersion>4.0.8.11</FileVersion>
+    <Version>4.0.8.14</Version>
+    <AssemblyVersion>4.0.8.14</AssemblyVersion>
+    <FileVersion>4.0.8.14</FileVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>
@@ -46,27 +46,23 @@
 
   <ItemGroup>
     <PackageReference Include="Gu.Analyzers" Version="2.0.3" PrivateAssets="all" />
-    <PackageReference Include="Gu.Roslyn.Extensions.Source" Version="0.17.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.5.0" />
+    <PackageReference Include="Gu.Roslyn.Extensions.Source" Version="0.17.1" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[6.0.0]" />
-    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.11" Condition="'$(Configuration)'=='Debug'" />
-    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.11" Condition="'$(Configuration)'!='Debug'" />
-    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" Condition="'$(Configuration)'=='Debug'" />
-    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" Condition="'$(Configuration)'!='Debug'" />
+    <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
+    <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.13" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Encodings.Web" Version="6.0.1" GeneratePathProperty="true" />
-    <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="tools\*" Pack="true" PackagePath="" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(OutputPath)\IDisposableAttributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(OutputPath)\IDisposableAttributes.dll" Pack="true" PackagePath="lib/netstandard2.0" Visible="false" />
+    <None Include="$(Pkgdlebansais_IDisposableAnalyzers_Attributes)\lib\netstandard2.0\IDisposableAnalyzers.Attributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
@@ -74,6 +70,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="$(Pkgdlebansais_IDisposableAnalyzers_Attributes)\lib\netstandard2.0\IDisposableAnalyzers.Attributes.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" CopyToOutputDirectory="PreserveNewest" />
@@ -87,12 +84,24 @@
     <ItemGroup Condition="'$(Configuration)'=='Debug'">
       <None Include="$(TargetDir)$(ProjectName).dll" />
       <None Include="$(TargetDir)$(ProjectName).pdb" />
+      <None Include="$(TargetDir)IDisposableAnalyzers.Attributes.dll" />
+      <None Include="$(TargetDir)System.Text.Json.dll" />
+      <None Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
+      <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
 
+    <!-- An analyzer must be packaged with its dependencies -->
     <ItemGroup Condition="'$(Configuration)'=='Release'">
       <None Include="$(TargetDir)$(ProjectName).dll" />
+      <None Include="$(TargetDir)IDisposableAnalyzers.Attributes.dll" />
+      <None Include="$(TargetDir)System.Text.Json.dll" />
+      <None Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
+      <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Release'" />
+
+    
+    <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" />
   </Target>
 </Project>
