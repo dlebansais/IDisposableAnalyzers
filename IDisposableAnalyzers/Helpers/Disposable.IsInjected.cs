@@ -294,10 +294,10 @@ internal static partial class Disposable
                 using StreamWriter writer = new(fileStream);
                 writer.WriteLine(@$"{DateTime.Now}
 '{expectedParameterOrdinal}' vs '{option.ParameterOrdinal}' ({OkNotOk(isParameterOrdinalMatch)})
-'{expectedSymbolName}' vs '{option.SymbolName}' ({OkNotOk(isParameterOrdinalMatch)})
-'{expectedTypeName}' vs '{option.TypeName}' ({OkNotOk(isParameterOrdinalMatch)})
-'{expectedNamespaceName}' vs '{option.NamespaceName}' ({OkNotOk(isParameterOrdinalMatch)})
-'{expectedAssemblyName}' vs '{option.AssemblyName}' ({OkNotOk(isParameterOrdinalMatch)})
+'{expectedSymbolName}' vs '{option.SymbolName}' ({OkNotOk(isSymbolNameMatch)})
+'{expectedTypeName}' vs '{option.TypeName}' ({OkNotOk(isTypeNameMatch)})
+'{expectedNamespaceName}' vs '{option.NamespaceName}' ({OkNotOk(isNamespaceNameMatch)})
+'{expectedAssemblyName}' vs '{option.AssemblyName}' ({OkNotOk(isAssemblyNameMatch)})
 ");
             }
             catch
