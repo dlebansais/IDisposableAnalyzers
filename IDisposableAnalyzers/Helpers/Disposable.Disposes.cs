@@ -90,6 +90,9 @@ internal static partial class Disposable
                 when Identity(candidate, recursion) is { } id &&
                      Disposes(id, recursion, context)
                 => true,
+            { Parent: ForEachStatementSyntax parent }
+                when parent.Expression == candidate
+                => true,
             { Parent: ConditionalAccessExpressionSyntax { WhenNotNull: InvocationExpressionSyntax invocation } }
                 => IsDisposeOrReturnValueDisposed(invocation),
             { Parent: MemberAccessExpressionSyntax { Parent: InvocationExpressionSyntax invocation } }

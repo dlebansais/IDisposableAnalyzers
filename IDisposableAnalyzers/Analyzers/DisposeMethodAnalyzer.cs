@@ -117,7 +117,7 @@ internal class DisposeMethodAnalyzer : DiagnosticAnalyzer
 
     private static bool ShouldCallBase(SymbolAndDeclaration<IMethodSymbol, MethodDeclarationSyntax> method, SyntaxNodeAnalysisContext context)
     {
-        if (method is { Symbol: { IsOverride: true, OverriddenMethod: { } overridden } } &&
+        if (method is { Symbol: { IsOverride: true, OverriddenMethod: { IsAbstract: false } overridden } } &&
             DisposeMethod.FindBaseCall(method.Declaration, context.SemanticModel, context.CancellationToken) is null)
         {
             if (overridden.DeclaringSyntaxReferences.Length == 0)

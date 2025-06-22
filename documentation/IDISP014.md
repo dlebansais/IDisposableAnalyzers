@@ -15,11 +15,7 @@ Use a single instance of HttpClient.
 
 ## Motivation
 
-https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/
-
-And:
-
-http://byterot.blogspot.se/2016/07/singleton-httpclient-dns.html
+https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines#recommended-use
 
 ## How to fix violations
 
