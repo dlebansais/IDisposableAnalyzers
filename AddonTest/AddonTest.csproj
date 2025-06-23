@@ -17,7 +17,7 @@
   
   <ItemGroup>
     <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.13" />
-    <PackageReference Include="dlebansais.IDisposableAnalyzers" Version="4.0.8.15">
+    <PackageReference Include="dlebansais.IDisposableAnalyzers" Version="4.0.8.16">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
