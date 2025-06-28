@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <Platforms>AnyCPU;x64</Platforms>
     <Nullable>enable</Nullable>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
@@ -55,8 +56,10 @@
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
     <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.13" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Encodings.Web" Version="6.0.1" GeneratePathProperty="true" />
+    <PackageReference Include="dlebansais.DebugLogging-Debug" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="dlebansais.DebugLogging" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
   </ItemGroup>
 
   <ItemGroup>
