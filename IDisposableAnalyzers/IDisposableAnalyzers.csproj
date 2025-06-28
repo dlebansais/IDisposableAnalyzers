@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
@@ -58,8 +58,20 @@
     <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Encodings.Web" Version="6.0.1" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" GeneratePathProperty="true" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" GeneratePathProperty="true" />
+    <PackageReference Include="System.Buffers" Version="4.6.1" GeneratePathProperty="true" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="System.Memory" Version="4.6.3" GeneratePathProperty="true" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" GeneratePathProperty="true" />
     <PackageReference Include="dlebansais.DebugLogging-Debug" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
     <PackageReference Include="dlebansais.DebugLogging" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <PackageReference Include="dlebansais.ProcessCommunication-Debug" Version="3.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="dlebansais.ProcessCommunication" Version="3.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <PackageReference Include="Method.Contracts-Debug" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="Method.Contracts" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +81,20 @@
     <None Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgMicrosoft_Extensions_DependencyInjection_Abstractions)\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Threading_Tasks_Extensions)\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Runtime_CompilerServices_Unsafe)\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Diagnostics_DiagnosticSource)\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Memory)\lib\netstandard2.0\System.Memory.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
     <TfmSpecificPackageFile Include="README-short.md" PackagePath="" />
   </ItemGroup>
 
@@ -77,6 +103,20 @@
     <None Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgMicrosoft_Extensions_DependencyInjection_Abstractions)\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Threading_Tasks_Extensions)\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Runtime_CompilerServices_Unsafe)\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Diagnostics_DiagnosticSource)\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Memory)\lib\netstandard2.0\System.Memory.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SolutionDir)'!='*Undefined*' And '$(TargetFramework)'=='netstandard2.0'">
@@ -91,6 +131,17 @@
       <None Include="$(TargetDir)System.Text.Json.dll" />
       <None Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
       <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
+      <None Include="$(TargetDir)Microsoft.Extensions.Logging.Abstractions.dll" />
+      <None Include="$(TargetDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+      <None Include="$(TargetDir)System.Threading.Tasks.Extensions.dll" />
+      <None Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" />
+      <None Include="$(TargetDir)System.Buffers.dll" />
+      <None Include="$(TargetDir)System.Diagnostics.DiagnosticSource.dll" />
+      <None Include="$(TargetDir)System.Memory.dll" />
+      <None Include="$(TargetDir)System.Numerics.Vectors.dll" />
+      <None Include="$(TargetDir)DebugLogging-Debug.dll" />
+      <None Include="$(TargetDir)ProcessCommunication-Debug.dll" />
+      <None Include="$(TargetDir)Method.Contracts-Debug.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
     <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" Condition="'$(Configuration)'=='Debug'" />
@@ -102,6 +153,17 @@
       <None Include="$(TargetDir)System.Text.Json.dll" />
       <None Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
       <None Include="$(TargetDir)System.Text.Encodings.Web.dll" />
+      <None Include="$(TargetDir)Microsoft.Extensions.Logging.Abstractions.dll" />
+      <None Include="$(TargetDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+      <None Include="$(TargetDir)System.Threading.Tasks.Extensions.dll" />
+      <None Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" />
+      <None Include="$(TargetDir)System.Buffers.dll" />
+      <None Include="$(TargetDir)System.Diagnostics.DiagnosticSource.dll" />
+      <None Include="$(TargetDir)System.Memory.dll" />
+      <None Include="$(TargetDir)System.Numerics.Vectors.dll" />
+      <None Include="$(TargetDir)DebugLogging.dll" />
+      <None Include="$(TargetDir)ProcessCommunication.dll" />
+      <None Include="$(TargetDir)Method.Contracts.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Release'" />
     <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget\" Condition="'$(Configuration)'=='Release'" />

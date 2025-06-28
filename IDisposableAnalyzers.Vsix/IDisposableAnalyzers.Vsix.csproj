@@ -7,7 +7,7 @@
     <RootNamespace>IDisposableAnalyzers</RootNamespace>
     <TargetName>IDisposableAnalyzers</TargetName>
     <NoWarn>NU1605</NoWarn>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup>
