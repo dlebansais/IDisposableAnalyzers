@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
 
 using Gu.Roslyn.AnalyzerExtensions;
@@ -15,7 +17,7 @@ internal class AssignmentAnalyzer : DiagnosticAnalyzer
 {
     static AssignmentAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -32,30 +34,51 @@ internal class AssignmentAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.Node is AssignmentExpressionSyntax { Left: { } left, Right: { } right } assignment &&
-            !left.IsKind(SyntaxKind.ElementAccessExpression) &&
-            context.SemanticModel.TryGetSymbol(left, context.CancellationToken, out var assignedSymbol))
+        Debugging.LogEntry("AssignmentAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            if (LocalOrParameter.TryCreate(assignedSymbol, out var localOrParameter) &&
-                Disposable.IsCreation(right, context.SemanticModel, context.CancellationToken) &&
-                Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken))
+            if (!context.IsExcludedFromAnalysis() &&
+                context.Node is AssignmentExpressionSyntax { Left: { } left, Right: { } right } assignment &&
+                !left.IsKind(SyntaxKind.ElementAccessExpression) &&
+                context.SemanticModel.TryGetSymbol(left, context.CancellationToken, out var assignedSymbol))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, assignment.GetLocation()));
-            }
+                if (LocalOrParameter.TryCreate(assignedSymbol, out var localOrParameter) &&
+                    Disposable.IsCreation(right, context.SemanticModel, context.CancellationToken) &&
+                    Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken))
+                {
+                    Location location = assignment.GetLocation();
+                    Debugging.Log($"AssignmentAnalyzer reporting IDISP001 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, location));
+                }
 
-            if (IsReassignedWithCreated(assignment, context))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP003DisposeBeforeReassigning, assignment.GetLocation()));
-            }
+                if (IsReassignedWithCreated(assignment, context))
+                {
+                    Location location = assignment.GetLocation();
+                    Debugging.Log($"AssignmentAnalyzer reporting IDISP003 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP003DisposeBeforeReassigning, location));
+                }
 
-            if (assignedSymbol is IParameterSymbol { RefKind: RefKind.Ref } refParameter &&
-                refParameter.ContainingSymbol.DeclaredAccessibility != Accessibility.Private &&
-                context.SemanticModel.TryGetType(right, context.CancellationToken, out var type) &&
-                Disposable.IsAssignableFrom(type, context.Compilation))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP008DoNotMixInjectedAndCreatedForMember, context.Node.GetLocation()));
+                if (assignedSymbol is IParameterSymbol { RefKind: RefKind.Ref } refParameter &&
+                    refParameter.ContainingSymbol.DeclaredAccessibility != Accessibility.Private &&
+                    context.SemanticModel.TryGetType(right, context.CancellationToken, out var type) &&
+                    Disposable.IsAssignableFrom(type, context.Compilation))
+                {
+                    Location location = context.Node.GetLocation();
+                    Debugging.Log($"AssignmentAnalyzer reporting IDISP008 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP008DoNotMixInjectedAndCreatedForMember, location));
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in AssignmentAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("AssignmentAnalyzer", stopwatch);
         }
     }
 

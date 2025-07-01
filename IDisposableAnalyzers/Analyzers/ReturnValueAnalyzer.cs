@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
 
 using Gu.Roslyn.AnalyzerExtensions;
@@ -15,7 +17,7 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
 {
     static ReturnValueAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -36,44 +38,89 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
 
     private static void HandleReturnValue(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.ContainingSymbol is { } &&
-            !IsIgnored(context.ContainingSymbol) &&
-            context.Node is ReturnStatementSyntax { Expression: { } expression })
+        Debugging.LogEntry("ReturnValueAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            HandleReturnValue(context, expression);
+            if (!context.IsExcludedFromAnalysis() &&
+                context.ContainingSymbol is { } &&
+                !IsIgnored(context.ContainingSymbol) &&
+                context.Node is ReturnStatementSyntax { Expression: { } expression })
+            {
+                HandleReturnValue(context, expression);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in ReturnValueAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("ReturnValueAnalyzer", stopwatch);
         }
     }
 
     private static void HandleArrow(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.ContainingSymbol is { } &&
-            !IsIgnored(context.ContainingSymbol) &&
-            context.Node is ArrowExpressionClauseSyntax { Expression: { } expression })
+        Debugging.LogEntry("ArrowReturnValueAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            HandleReturnValue(context, expression);
+            if (!context.IsExcludedFromAnalysis() &&
+                context.ContainingSymbol is { } &&
+                !IsIgnored(context.ContainingSymbol) &&
+                context.Node is ArrowExpressionClauseSyntax { Expression: { } expression })
+            {
+                HandleReturnValue(context, expression);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in ArrowReturnValueAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("ArrowReturnValueAnalyzer", stopwatch);
         }
     }
 
     private static void HandleLambda(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.ContainingSymbol is { } &&
-            !IsIgnored(context.ContainingSymbol) &&
-            context.Node is LambdaExpressionSyntax { Body: ExpressionSyntax expression } lambda &&
-            ShouldHandle())
-        {
-            HandleReturnValue(context, expression);
-        }
+        Debugging.LogEntry("LambdaReturnValueAnalyzer", context, out Stopwatch stopwatch);
 
-        bool ShouldHandle()
+        try
         {
-            return lambda switch
+            if (!context.IsExcludedFromAnalysis() &&
+                context.ContainingSymbol is { } &&
+                !IsIgnored(context.ContainingSymbol) &&
+                context.Node is LambdaExpressionSyntax { Body: ExpressionSyntax expression } lambda &&
+                ShouldHandle())
             {
-                { Parent: ArgumentSyntax } => Disposable.Ignores(lambda, new AnalyzerContext(context), context.CancellationToken),
-                _ => true,
-            };
+                HandleReturnValue(context, expression);
+            }
+
+            bool ShouldHandle()
+            {
+                return lambda switch
+                {
+                    { Parent: ArgumentSyntax } => Disposable.Ignores(lambda, new AnalyzerContext(context), context.CancellationToken),
+                    _ => true,
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in LambdaReturnValueAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("LambdaReturnValueAnalyzer", stopwatch);
         }
     }
 
@@ -85,24 +132,32 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
             if (IsUsing(returnedSymbol, context.CancellationToken) ||
                 Disposable.IsDisposedBefore(returnedSymbol, returnValue, context.SemanticModel, context.CancellationToken))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP011DontReturnDisposed, returnValue.GetLocation()));
+                Location location = returnValue.GetLocation();
+                Debugging.Log($"ReturnValueAnalyzer reporting IDISP011 at {location}");
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP011DontReturnDisposed, location));
             }
             else
             {
                 if (returnValue.FirstAncestor<AccessorDeclarationSyntax>() is { } accessor &&
                     accessor.IsKind(SyntaxKind.GetAccessorDeclaration))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP012PropertyShouldNotReturnCreated, returnValue.GetLocation()));
+                    Location location = returnValue.GetLocation();
+                    Debugging.Log($"ReturnValueAnalyzer reporting IDISP012 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP012PropertyShouldNotReturnCreated, location));
                 }
 
                 if (returnValue.FirstAncestor<ArrowExpressionClauseSyntax>() is { Parent: PropertyDeclarationSyntax _ })
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP012PropertyShouldNotReturnCreated, returnValue.GetLocation()));
+                    Location location = returnValue.GetLocation();
+                    Debugging.Log($"ReturnValueAnalyzer reporting IDISP012 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP012PropertyShouldNotReturnCreated, location));
                 }
 
                 if (!IsDisposableReturnTypeOrIgnored(ReturnType(context), context.Compilation))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP005ReturnTypeShouldBeIDisposable, returnValue.GetLocation()));
+                    Location location = returnValue.GetLocation();
+                    Debugging.Log($"ReturnValueAnalyzer reporting IDISP005 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP005ReturnTypeShouldBeIDisposable, location));
                 }
             }
         }
@@ -120,7 +175,9 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
                     {
                         if (IsLazyEnumerable(invocation, containingType, context.SemanticModel, context.CancellationToken))
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP011DontReturnDisposed, argument.GetLocation()));
+                            Location location = argument.GetLocation();
+                            Debugging.Log($"ReturnValueAnalyzer reporting IDISP011 at {location}");
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP011DontReturnDisposed, location));
                         }
                     }
                 }
@@ -132,7 +189,9 @@ internal class ReturnValueAnalyzer : DiagnosticAnalyzer
             !returnValue.TryFirstAncestorOrSelf<AwaitExpressionSyntax>(out _) &&
             ShouldAwait(context, returnValue))
         {
-            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP013AwaitInUsing, returnValue.GetLocation()));
+            Location location = returnValue.GetLocation();
+            Debugging.Log($"ReturnValueAnalyzer reporting IDISP013 at {location}");
+            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP013AwaitInUsing, location));
         }
 
         static bool ShouldAwait(SyntaxNodeAnalysisContext context, ExpressionSyntax returnValue)

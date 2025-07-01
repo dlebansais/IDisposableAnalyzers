@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
 
 using Gu.Roslyn.AnalyzerExtensions;
@@ -15,7 +17,7 @@ internal class ArgumentAnalyzer : DiagnosticAnalyzer
 {
     static ArgumentAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -31,24 +33,43 @@ internal class ArgumentAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.Node is ArgumentSyntax { Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } } argument &&
-            argument.RefOrOutKeyword.IsEither(SyntaxKind.RefKeyword, SyntaxKind.OutKeyword) &&
-            IsCreation(argument, new AnalyzerContext(context), context.CancellationToken) &&
-            context.SemanticModel.TryGetSymbol(argument.Expression, context.CancellationToken, out var symbol))
-        {
-            if (symbol.Kind == SymbolKind.Discard ||
-                (LocalOrParameter.TryCreate(symbol, out var localOrParameter) &&
-                 Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken)))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, argument.GetLocation()));
-            }
+        Debugging.LogEntry("ArgumentAnalyzer", context, out Stopwatch stopwatch);
 
-            if (Disposable.IsAssignedWithCreated(symbol, invocation, context.SemanticModel, context.CancellationToken) &&
-                !Disposable.IsDisposedBefore(symbol, invocation, context.SemanticModel, context.CancellationToken))
+        try
+        {
+            if (!context.IsExcludedFromAnalysis() &&
+                context.Node is ArgumentSyntax { Parent: ArgumentListSyntax { Parent: InvocationExpressionSyntax invocation } } argument &&
+                argument.RefOrOutKeyword.IsEither(SyntaxKind.RefKeyword, SyntaxKind.OutKeyword) &&
+                IsCreation(argument, new AnalyzerContext(context), context.CancellationToken) &&
+                context.SemanticModel.TryGetSymbol(argument.Expression, context.CancellationToken, out var symbol))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP003DisposeBeforeReassigning, argument.GetLocation()));
+                if (symbol.Kind == SymbolKind.Discard ||
+                    (LocalOrParameter.TryCreate(symbol, out var localOrParameter) &&
+                     Disposable.ShouldDispose(localOrParameter, new AnalyzerContext(context), context.CancellationToken)))
+                {
+                    Location location = argument.GetLocation();
+                    Debugging.Log($"ArgumentAnalyzer reporting IDISP001 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP001DisposeCreated, location));
+                }
+
+                if (Disposable.IsAssignedWithCreated(symbol, invocation, context.SemanticModel, context.CancellationToken) &&
+                    !Disposable.IsDisposedBefore(symbol, invocation, context.SemanticModel, context.CancellationToken))
+                {
+                    Location location = argument.GetLocation();
+                    Debugging.Log($"ArgumentAnalyzer reporting IDISP003 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP003DisposeBeforeReassigning, location));
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in ArgumentAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("ArgumentAnalyzer", stopwatch);
         }
     }
 

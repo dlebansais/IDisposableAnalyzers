@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Gu.Roslyn.AnalyzerExtensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -12,7 +14,7 @@ internal class UsingStatementAnalyzer : DiagnosticAnalyzer
 {
     static UsingStatementAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -27,28 +29,49 @@ internal class UsingStatementAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.Node is UsingStatementSyntax usingStatement)
+        Debugging.LogEntry("UsingStatementAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            switch (usingStatement)
+            if (!context.IsExcludedFromAnalysis() &&
+                context.Node is UsingStatementSyntax usingStatement)
             {
-                case { Declaration.Variables: { } variables }:
-                    foreach (var declarator in variables)
-                    {
-                        if (declarator is { Initializer.Value: { } value } &&
-                            Disposable.IsCachedOrInjectedOnly(value, value, new AnalyzerContext(context), context.CancellationToken))
+                switch (usingStatement)
+                {
+                    case { Declaration.Variables: { } variables }:
+                        foreach (var declarator in variables)
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, value.GetLocation()));
+                            if (declarator is { Initializer.Value: { } value } &&
+                                Disposable.IsCachedOrInjectedOnly(value, value, new AnalyzerContext(context), context.CancellationToken))
+                            {
+                                Location location = value.GetLocation();
+                                Debugging.Log($"UsingStatementAnalyzer reporting IDISP007 at {location}");
+                                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, location));
+                            }
                         }
-                    }
 
-                    break;
-                case { Expression: { } expression }
-                    when Disposable.IsCachedOrInjectedOnly(expression, expression, new AnalyzerContext(context), context.CancellationToken):
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, usingStatement.Expression.GetLocation()));
+                        break;
+                    case { Expression: { } expression }
+                        when Disposable.IsCachedOrInjectedOnly(expression, expression, new AnalyzerContext(context), context.CancellationToken):
+                        {
+                            Location location = usingStatement.Expression.GetLocation();
+                            Debugging.Log($"UsingStatementAnalyzer reporting IDISP007 at {location}");
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, location));
+                        }
 
-                    break;
+                        break;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in UsingStatementAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("UsingStatementAnalyzer", stopwatch);
         }
     }
 }

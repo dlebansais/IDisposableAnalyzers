@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Gu.Roslyn.AnalyzerExtensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -12,7 +14,7 @@ internal class MethodReturnValuesAnalyzer : DiagnosticAnalyzer
 {
     static MethodReturnValuesAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -27,31 +29,48 @@ internal class MethodReturnValuesAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (context.ContainingSymbol is IMethodSymbol method &&
-            context.Node is MethodDeclarationSyntax methodDeclaration &&
-            Disposable.IsAssignableFrom(method.ReturnType, context.Compilation))
+        Debugging.LogEntry("MethodReturnValuesAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            using ReturnValueWalker walker = ReturnValueWalker.Borrow(methodDeclaration, ReturnValueSearch.RecursiveInside, context.SemanticModel, context.CancellationToken);
-            if (walker.Values.TryFirst(x => x is not null && IsCreated(x), out _) &&
-                walker.Values.TryFirst(x => x is not null && IsCachedOrInjected(x) && !IsNop(x), out _))
+            if (context.ContainingSymbol is IMethodSymbol method &&
+                context.Node is MethodDeclarationSyntax methodDeclaration &&
+                Disposable.IsAssignableFrom(method.ReturnType, context.Compilation))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP015DoNotReturnCachedAndCreated, methodDeclaration.Identifier.GetLocation()));
+                using ReturnValueWalker walker = ReturnValueWalker.Borrow(methodDeclaration, ReturnValueSearch.RecursiveInside, context.SemanticModel, context.CancellationToken);
+                if (walker.Values.TryFirst(x => x is not null && IsCreated(x), out _) &&
+                    walker.Values.TryFirst(x => x is not null && IsCachedOrInjected(x) && !IsNop(x), out _))
+                {
+                    Location location = methodDeclaration.Identifier.GetLocation();
+                    Debugging.Log($"MethodReturnValuesAnalyzer reporting IDISP015 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP015DoNotReturnCachedAndCreated, location));
+                }
+            }
+
+            bool IsCreated(ExpressionSyntax expression)
+            {
+                return Disposable.IsCreation(expression, context.SemanticModel, context.CancellationToken);
+            }
+
+            bool IsCachedOrInjected(ExpressionSyntax expression)
+            {
+                return Disposable.IsCachedOrInjected(expression, expression, new AnalyzerContext(context), context.CancellationToken);
+            }
+
+            bool IsNop(ExpressionSyntax expression)
+            {
+                return Disposable.IsNop(expression, context.SemanticModel, context.CancellationToken);
             }
         }
-
-        bool IsCreated(ExpressionSyntax expression)
+        catch (Exception ex)
         {
-            return Disposable.IsCreation(expression, context.SemanticModel, context.CancellationToken);
+            Debugging.Log($"Exception in MethodReturnValuesAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
         }
-
-        bool IsCachedOrInjected(ExpressionSyntax expression)
+        finally
         {
-            return Disposable.IsCachedOrInjected(expression, expression, new AnalyzerContext(context), context.CancellationToken);
-        }
-
-        bool IsNop(ExpressionSyntax expression)
-        {
-            return Disposable.IsNop(expression, context.SemanticModel, context.CancellationToken);
+            Debugging.LogExit("MethodReturnValuesAnalyzer", stopwatch);
         }
     }
 }

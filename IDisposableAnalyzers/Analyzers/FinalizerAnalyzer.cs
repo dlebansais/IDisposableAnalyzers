@@ -1,7 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
-
+using System.Diagnostics;
 using Gu.Roslyn.AnalyzerExtensions;
 
 using Microsoft.CodeAnalysis;
@@ -14,7 +15,7 @@ internal class FinalizerAnalyzer : DiagnosticAnalyzer
 {
     static FinalizerAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -30,20 +31,39 @@ internal class FinalizerAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.Node is DestructorDeclarationSyntax methodDeclaration)
-        {
-            if (DisposeBool.Find(methodDeclaration) is { Argument: { Expression: { } expression } isDisposing } &&
-                !expression.IsKind(SyntaxKind.FalseLiteralExpression))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP022DisposeFalse, isDisposing.GetLocation()));
-            }
+        Debugging.LogEntry("FinalizerAnalyzer", context, out Stopwatch stopwatch);
 
-            using var walker = FinalizerContextWalker.Borrow(methodDeclaration, context.SemanticModel, context.CancellationToken);
-            foreach (SyntaxNode node in walker.UsedReferenceTypes)
+        try
+        {
+            if (!context.IsExcludedFromAnalysis() &&
+                context.Node is DestructorDeclarationSyntax methodDeclaration)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP023ReferenceTypeInFinalizerContext, node.GetLocation()));
+                if (DisposeBool.Find(methodDeclaration) is { Argument: { Expression: { } expression } isDisposing } &&
+                    !expression.IsKind(SyntaxKind.FalseLiteralExpression))
+                {
+                    Location location = isDisposing.GetLocation();
+                    Debugging.Log($"FinalizerAnalyzer reporting IDISP022 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP022DisposeFalse, location));
+                }
+
+                using var walker = FinalizerContextWalker.Borrow(methodDeclaration, context.SemanticModel, context.CancellationToken);
+                foreach (SyntaxNode node in walker.UsedReferenceTypes)
+                {
+                    Location location = node.GetLocation();
+                    Debugging.Log($"FinalizerAnalyzer reporting IDISP023 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP023ReferenceTypeInFinalizerContext, location));
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in FinalizerAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("FinalizerAnalyzer", stopwatch);
         }
     }
 }

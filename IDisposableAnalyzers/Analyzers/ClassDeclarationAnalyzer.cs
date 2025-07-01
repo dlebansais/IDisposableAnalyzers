@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Gu.Roslyn.AnalyzerExtensions;
 
 using Microsoft.CodeAnalysis;
@@ -13,7 +15,7 @@ internal class ClassDeclarationAnalyzer : DiagnosticAnalyzer
 {
     static ClassDeclarationAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -27,6 +29,26 @@ internal class ClassDeclarationAnalyzer : DiagnosticAnalyzer
     }
 
     private static void Handle(SyntaxNodeAnalysisContext context)
+    {
+        Debugging.LogEntry("ClassDeclarationAnalyzer", context, out Stopwatch stopwatch);
+
+        try
+        {
+            HandleInternal(context);
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in ClassDeclarationAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("ClassDeclarationAnalyzer", stopwatch);
+        }
+    }
+
+    private static void HandleInternal(SyntaxNodeAnalysisContext context)
     {
         if (context.Node is not ClassDeclarationSyntax classDeclaration)
         {
@@ -50,10 +72,12 @@ internal class ClassDeclarationAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
+            Location location = classDeclaration.Identifier.GetLocation();
+            Debugging.Log($"ClassDeclarationAnalyzer reporting IDISP025 at {location}");
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     Descriptors.IDISP025SealDisposable,
-                    classDeclaration.Identifier.GetLocation(),
+                    location,
                     additionalLocations: new[] { disposeMethod.Locations[0] }));
         }
         else if (type.IsAssignableTo(KnownSymbols.IAsyncDisposable, context.SemanticModel.Compilation))
@@ -68,10 +92,12 @@ internal class ClassDeclarationAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
+            Location location = classDeclaration.Identifier.GetLocation();
+            Debugging.Log($"ClassDeclarationAnalyzer reporting IDISP026 at {location}");
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     Descriptors.IDISP026SealAsyncDisposable,
-                    classDeclaration.Identifier.GetLocation(),
+                    location,
                     additionalLocations: new[] { disposeMethod.Locations[0] }));
         }
     }

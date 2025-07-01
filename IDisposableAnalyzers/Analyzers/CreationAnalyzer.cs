@@ -1,6 +1,8 @@
 ﻿namespace IDisposableAnalyzers;
 
+using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Gu.Roslyn.AnalyzerExtensions;
@@ -15,7 +17,7 @@ internal class CreationAnalyzer : DiagnosticAnalyzer
 {
     static CreationAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -31,25 +33,44 @@ internal class CreationAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.ContainingSymbol is { } &&
-            ShouldCheck(context) is { } expression)
-        {
-            if (Disposable.IsCreation(expression, context.SemanticModel, context.CancellationToken) &&
-                Disposable.Ignores(expression, new AnalyzerContext(context), context.CancellationToken))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP004DoNotIgnoreCreated, context.Node.GetLocation()));
-            }
+        Debugging.LogEntry("CreationAnalyzer", context, out Stopwatch stopwatch);
 
-            if (context.Node is ObjectCreationExpressionSyntax objectCreation &&
-                context.SemanticModel.TryGetType(objectCreation, context.CancellationToken, out var type) &&
-                type.IsAssignableTo(KnownSymbols.HttpClient, context.Compilation) &&
-                !IsStaticFieldInitializer(objectCreation) &&
-                !IsStaticPropertyInitializer(objectCreation) &&
-                !IsStaticCtor(context.ContainingSymbol))
+        try
+        {
+            if (!context.IsExcludedFromAnalysis() &&
+                context.ContainingSymbol is { } &&
+                ShouldCheck(context) is { } expression)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP014UseSingleInstanceOfHttpClient, objectCreation.GetLocation()));
+                if (Disposable.IsCreation(expression, context.SemanticModel, context.CancellationToken) &&
+                    Disposable.Ignores(expression, new AnalyzerContext(context), context.CancellationToken))
+                {
+                    Location location = context.Node.GetLocation();
+                    Debugging.Log($"CreationAnalyzer reporting IDISP004 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP004DoNotIgnoreCreated, location));
+                }
+
+                if (context.Node is ObjectCreationExpressionSyntax objectCreation &&
+                    context.SemanticModel.TryGetType(objectCreation, context.CancellationToken, out var type) &&
+                    type.IsAssignableTo(KnownSymbols.HttpClient, context.Compilation) &&
+                    !IsStaticFieldInitializer(objectCreation) &&
+                    !IsStaticPropertyInitializer(objectCreation) &&
+                    !IsStaticCtor(context.ContainingSymbol))
+                {
+                    Location location = objectCreation.GetLocation();
+                    Debugging.Log($"CreationAnalyzer reporting IDISP014 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP014UseSingleInstanceOfHttpClient, location));
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in CreationAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("CreationAnalyzer", stopwatch);
         }
     }
 

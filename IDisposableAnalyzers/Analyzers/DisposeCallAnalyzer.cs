@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -19,7 +20,7 @@ internal class DisposeCallAnalyzer : DiagnosticAnalyzer
 {
     static DisposeCallAnalyzer()
     {
-        Json.LoadJsonAssembly();
+        AssemblyLoading.LoadAssembliesManually();
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
@@ -36,67 +37,88 @@ internal class DisposeCallAnalyzer : DiagnosticAnalyzer
 
     private static void Handle(SyntaxNodeAnalysisContext context)
     {
-        if (!context.IsExcludedFromAnalysis() &&
-            context.Node is InvocationExpressionSyntax invocation &&
-            DisposeCall.MatchAny(invocation, context.SemanticModel, context.CancellationToken) is { } call &&
-            !invocation.TryFirstAncestorOrSelf<AnonymousFunctionExpressionSyntax>(out _) &&
-            call.FindDisposed(context.SemanticModel, context.CancellationToken) is { } disposed)
+        Debugging.LogEntry("DisposeCallAnalyzer", context, out Stopwatch stopwatch);
+
+        try
         {
-            if (Disposable.IsCachedOrInjectedOnly(disposed, invocation, new AnalyzerContext(context), context.CancellationToken) &&
-                !StaticMemberInStaticContext(disposed, context) &&
-                NotLeaveOpen())
+            if (!context.IsExcludedFromAnalysis() &&
+                context.Node is InvocationExpressionSyntax invocation &&
+                DisposeCall.MatchAny(invocation, context.SemanticModel, context.CancellationToken) is { } call &&
+                !invocation.TryFirstAncestorOrSelf<AnonymousFunctionExpressionSyntax>(out _) &&
+                call.FindDisposed(context.SemanticModel, context.CancellationToken) is { } disposed)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, invocation.FirstAncestorOrSelf<StatementSyntax>()?.GetLocation() ?? invocation.GetLocation()));
-            }
-
-            if (invocation.Expression is MemberAccessExpressionSyntax { Expression: IdentifierNameSyntax _ } &&
-                context.SemanticModel.TryGetSymbol(disposed, context.CancellationToken, out ILocalSymbol? local))
-            {
-                if (IsUsedAfter(local, invocation, context, out var locations))
+                if (Disposable.IsCachedOrInjectedOnly(disposed, invocation, new AnalyzerContext(context), context.CancellationToken) &&
+                    !StaticMemberInStaticContext(disposed, context) &&
+                    NotLeaveOpen())
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP016DoNotUseDisposedInstance, invocation.FirstAncestorOrSelf<StatementSyntax>()?.GetLocation() ?? invocation.GetLocation(), additionalLocations: locations));
+                    Location location = invocation.FirstAncestorOrSelf<StatementSyntax>()?.GetLocation() ?? invocation.GetLocation();
+                    Debugging.Log($"DisposeCallAnalyzer reporting IDISP007 at {location}");
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP007DoNotDisposeInjected, location));
                 }
 
-                if (IsPreferUsing(local, invocation, context))
+                if (invocation.Expression is MemberAccessExpressionSyntax { Expression: IdentifierNameSyntax _ } &&
+                    context.SemanticModel.TryGetSymbol(disposed, context.CancellationToken, out ILocalSymbol? local))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP017PreferUsing, invocation.GetLocation()));
-                }
-            }
-
-            bool StaticMemberInStaticContext(IdentifierNameSyntax disposed, SyntaxNodeAnalysisContext context)
-            {
-                return context.ContainingSymbol is { IsStatic: true } &&
-                       context.SemanticModel.GetSymbolSafe(disposed, context.CancellationToken) is { } symbol &&
-                       FieldOrProperty.TryCreate(symbol, out var fieldOrProperty) &&
-                       fieldOrProperty.IsStatic;
-            }
-
-            bool NotLeaveOpen()
-            {
-                if (invocation.FirstAncestor<IfStatementSyntax>() is { Condition: { } condition } ifStatement)
-                {
-                    return condition switch
+                    if (IsUsedAfter(local, invocation, context, out var locations))
                     {
-                        PrefixUnaryExpressionSyntax { OperatorToken.RawKind: (int)SyntaxKind.ExclamationToken, Operand: { } operand }
-                            when Field(operand)?.EndsWith("leaveOpen", StringComparison.OrdinalIgnoreCase) is true &&
-                                 ifStatement.Statement.Contains(invocation)
-                            => false,
-                        _ => true,
-                    };
+                        Location location = invocation.FirstAncestorOrSelf<StatementSyntax>()?.GetLocation() ?? invocation.GetLocation();
+                        Debugging.Log($"DisposeCallAnalyzer reporting IDISP016 at {location}");
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP016DoNotUseDisposedInstance, location, additionalLocations: locations));
+                    }
 
-                    static string? Field(ExpressionSyntax candidate)
+                    if (IsPreferUsing(local, invocation, context))
                     {
-                        return candidate switch
-                        {
-                            IdentifierNameSyntax identifierName => identifierName.Identifier.ValueText,
-                            MemberAccessExpressionSyntax { Expression: ThisExpressionSyntax, Name: IdentifierNameSyntax { } identifierName } => identifierName.Identifier.ValueText,
-                            _ => null,
-                        };
+                        Location location = invocation.GetLocation();
+                        Debugging.Log($"DisposeCallAnalyzer reporting IDISP017 at {location}");
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.IDISP017PreferUsing, location));
                     }
                 }
 
-                return true;
+                bool StaticMemberInStaticContext(IdentifierNameSyntax disposed, SyntaxNodeAnalysisContext context)
+                {
+                    return context.ContainingSymbol is { IsStatic: true } &&
+                           context.SemanticModel.GetSymbolSafe(disposed, context.CancellationToken) is { } symbol &&
+                           FieldOrProperty.TryCreate(symbol, out var fieldOrProperty) &&
+                           fieldOrProperty.IsStatic;
+                }
+
+                bool NotLeaveOpen()
+                {
+                    if (invocation.FirstAncestor<IfStatementSyntax>() is { Condition: { } condition } ifStatement)
+                    {
+                        return condition switch
+                        {
+                            PrefixUnaryExpressionSyntax { OperatorToken.RawKind: (int)SyntaxKind.ExclamationToken, Operand: { } operand }
+                                when Field(operand)?.EndsWith("leaveOpen", StringComparison.OrdinalIgnoreCase) is true &&
+                                     ifStatement.Statement.Contains(invocation)
+                                => false,
+                            _ => true,
+                        };
+
+                        static string? Field(ExpressionSyntax candidate)
+                        {
+                            return candidate switch
+                            {
+                                IdentifierNameSyntax identifierName => identifierName.Identifier.ValueText,
+                                MemberAccessExpressionSyntax { Expression: ThisExpressionSyntax, Name: IdentifierNameSyntax { } identifierName } => identifierName.Identifier.ValueText,
+                                _ => null,
+                            };
+                        }
+                    }
+
+                    return true;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Debugging.Log($"Exception in DisposeCallAnalyzer: {ex.Message}");
+            Debugging.Log(ex.StackTrace ?? "No stack trace");
+            throw;
+        }
+        finally
+        {
+            Debugging.LogExit("DisposeCallAnalyzer", stopwatch);
         }
     }
 

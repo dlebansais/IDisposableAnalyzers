@@ -66,12 +66,12 @@
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.6" GeneratePathProperty="true" />
     <PackageReference Include="System.Memory" Version="4.6.3" GeneratePathProperty="true" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="dlebansais.DebugLogging-Debug" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <PackageReference Include="dlebansais.DebugLogging" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <PackageReference Include="dlebansais.ProcessCommunication-Debug" Version="3.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <PackageReference Include="dlebansais.ProcessCommunication" Version="3.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <PackageReference Include="Method.Contracts-Debug" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <PackageReference Include="Method.Contracts" Version="2.0.1" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <PackageReference Include="dlebansais.DebugLogging-Debug" Version="2.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="dlebansais.DebugLogging" Version="2.0.2" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <PackageReference Include="dlebansais.ProcessCommunication-Debug" Version="3.0.4" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="dlebansais.ProcessCommunication" Version="3.0.4" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <PackageReference Include="Method.Contracts-Debug" Version="2.0.3" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <PackageReference Include="Method.Contracts" Version="2.0.3" GeneratePathProperty="true" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -89,12 +89,9 @@
     <None Include="$(PkgSystem_Diagnostics_DiagnosticSource)\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgSystem_Memory)\lib\netstandard2.0\System.Memory.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts-Debug.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <TfmSpecificPackageFile Include="README-short.md" PackagePath="" />
   </ItemGroup>
 
@@ -111,12 +108,9 @@
     <None Include="$(PkgSystem_Diagnostics_DiagnosticSource)\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Memory)\lib\netstandard2.0\System.Memory.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts-Debug.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)|$(Platform)'!='Debug|x64'" />
+    <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\Method.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SolutionDir)'!='*Undefined*' And '$(TargetFramework)'=='netstandard2.0'">
@@ -139,9 +133,9 @@
       <None Include="$(TargetDir)System.Diagnostics.DiagnosticSource.dll" />
       <None Include="$(TargetDir)System.Memory.dll" />
       <None Include="$(TargetDir)System.Numerics.Vectors.dll" />
-      <None Include="$(TargetDir)DebugLogging-Debug.dll" />
-      <None Include="$(TargetDir)ProcessCommunication-Debug.dll" />
-      <None Include="$(TargetDir)Method.Contracts-Debug.dll" />
+      <None Include="$(TargetDir)DebugLogging.dll" />
+      <None Include="$(TargetDir)ProcessCommunication.dll" />
+      <None Include="$(TargetDir)Method.Contracts.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
     <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" Condition="'$(Configuration)'=='Debug'" />
