@@ -1,13 +1,14 @@
 ﻿namespace IDisposableAnalyzers;
 
-using System;
 using System.Diagnostics;
-using System.IO;
+#if DEBUG_LOGGING
 using DebugLogging;
+#endif
 using Microsoft.CodeAnalysis.Diagnostics;
 
 internal static class Debugging
 {
+#if DEBUG_LOGGING
     private static DebugLogger debugLogger = new();
     private static object lockObject = new();
 
@@ -25,6 +26,16 @@ internal static class Debugging
             }
         }
     }
+#else
+    /// <summary>
+    /// Does nothing.
+    /// </summary>
+    /// <param name="message">Unused.</param>
+    internal static void Log(string message)
+    {
+        _ = message; // Suppress unused variable warning
+    }
+#endif
 
     /// <summary>
     /// Returns the shortened version of the text if it exceeds the specified maximum length.

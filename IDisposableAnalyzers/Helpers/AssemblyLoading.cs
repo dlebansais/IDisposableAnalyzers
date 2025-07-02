@@ -22,6 +22,7 @@ internal static class AssemblyLoading
             {
                 string[] files =
                 [
+#if DEBUG_LOGGING
                     "IDisposableAnalyzers.Attributes.dll",
                     "Method.Contracts.dll",
                     "Microsoft.Bcl.AsyncInterfaces.dll",
@@ -33,10 +34,11 @@ internal static class AssemblyLoading
                     "System.Numerics.Vectors.dll",
                     "System.Runtime.CompilerServices.Unsafe.dll",
                     "System.Text.Encodings.Web.dll",
-                    "System.Text.Json.dll",
                     "System.Threading.Tasks.Extensions.dll",
                     "ProcessCommunication.dll",
                     "DebugLogging.dll",
+#endif
+                    "System.Text.Json.dll",
                 ];
 
                 foreach (var file in files)
