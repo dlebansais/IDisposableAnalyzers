@@ -28,4 +28,18 @@ public static class Helper
         F f = new(e1, e2);
         return f;
     }
+
+    public static IDisposable ExtensionCreateD()
+    {
+        C c = new();
+        D d = new();
+        d.CallInit(c);
+
+        return d;
+    }
+
+    private static void CallInit(this D d, C c)
+    {
+        d.Init(c);
+    }
 }
