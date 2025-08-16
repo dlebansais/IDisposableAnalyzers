@@ -24,7 +24,7 @@ internal static class AssemblyLoading
                 [
 #if DEBUG_LOGGING
                     "IDisposableAnalyzers.Attributes.dll",
-                    "Method.Contracts.dll",
+                    "dlebansais.Method.Contracts.dll",
                     "Microsoft.Bcl.AsyncInterfaces.dll",
                     "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
                     "Microsoft.Extensions.Logging.Abstractions.dll",
