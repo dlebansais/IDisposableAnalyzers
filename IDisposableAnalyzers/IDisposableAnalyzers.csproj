@@ -19,7 +19,7 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>dlebansais.IDisposableAnalyzers</PackageId>
-    <PackageVersion>4.0.8.16</PackageVersion>
+    <PackageVersion>4.0.8.17</PackageVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <AppendTargetFrameworkToOutputDirectory>false</AppendTargetFrameworkToOutputDirectory>
@@ -28,9 +28,9 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.8.16</Version>
-    <AssemblyVersion>4.0.8.16</AssemblyVersion>
-    <FileVersion>4.0.8.16</FileVersion>
+    <Version>4.0.8.17</Version>
+    <AssemblyVersion>4.0.8.17</AssemblyVersion>
+    <FileVersion>4.0.8.17</FileVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Authors>Johan Larsson, milleniumbug</Authors>
     <Description>Analyzers and fixes for IDisposable (fork from DotnetAnalyzers/IDisposableAnalyzer).</Description>
@@ -96,7 +96,7 @@
     <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\dlebansais.Method.Contracts.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(Pkgdlebansais_Method_Contracts)\lib\netstandard2.0\Method.Contracts.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -117,7 +117,7 @@
     <None Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(Pkgdlebansais_DebugLogging)\lib\netstandard2.0\DebugLogging.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(Pkgdlebansais_ProcessCommunication)\lib\netstandard2.0\ProcessCommunication.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(PkgMethod_Contracts)\lib\netstandard2.0\dlebansais.Method.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(Pkgdlebansais_Method_Contracts)\lib\netstandard2.0\Method.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SolutionDir)'!='*Undefined*' And '$(TargetFramework)'=='netstandard2.0'">
@@ -145,7 +145,7 @@
       <None Include="$(TargetDir)System.Numerics.Vectors.dll" />
       <None Include="$(TargetDir)DebugLogging.dll" />
       <None Include="$(TargetDir)ProcessCommunication.dll" />
-      <None Include="$(TargetDir)dlebansais.Method.Contracts.dll" />
+      <None Include="$(TargetDir)Method.Contracts.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget-debug\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Debug'" />
     <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget-debug\" Condition="'$(Configuration)'=='Debug'" />
@@ -170,7 +170,7 @@
       <None Include="$(TargetDir)System.Numerics.Vectors.dll" />
       <None Include="$(TargetDir)DebugLogging.dll" />
       <None Include="$(TargetDir)ProcessCommunication.dll" />
-      <None Include="$(TargetDir)dlebansais.Method.Contracts.dll" />
+      <None Include="$(TargetDir)Method.Contracts.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(None)" DestinationFolder="$(SolutionDir)nuget\analyzers\dotnet\cs\" Condition="'$(Configuration)'=='Release'" />
     <Copy SourceFiles="README-short.md" DestinationFolder="$(SolutionDir)nuget\" Condition="'$(Configuration)'=='Release'" />
