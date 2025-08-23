@@ -23,6 +23,6 @@ public class UsingNUnit
     [Test]
     public void M()
     {
-        Assert.AreSame(_container, _container);
+        Assert.That(_container, Is.SameAs(_container));
     }
 }

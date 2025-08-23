@@ -10,14 +10,14 @@ public static class Tests
     public static void Throws()
     {
         Assert.Throws<InvalidOperationException>(() => Create(true));
-        Assert.AreEqual(
+        Assert.That(
             "Expected",
-            Assert.Throws<InvalidOperationException>(() => Create(true))?.Message);
+            Is.EqualTo(Assert.Throws<InvalidOperationException>(() => Create(true))?.Message));
 
         Assert.ThrowsAsync<InvalidOperationException>(() => CreateAsync(true));
-        Assert.AreEqual(
+        Assert.That(
             "Expected",
-            Assert.ThrowsAsync<InvalidOperationException>(() => CreateAsync(true))?.Message);
+            Is.EqualTo(Assert.ThrowsAsync<InvalidOperationException>(() => CreateAsync(true))?.Message));
     }
 
     private static Disposable Create(bool b)

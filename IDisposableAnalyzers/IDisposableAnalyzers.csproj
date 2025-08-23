@@ -57,22 +57,22 @@
     <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
     <PackageReference Include="dlebansais.IDisposableAnalyzers.Attributes" Version="4.0.8.13" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Json" Version="6.0.11" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.8" GeneratePathProperty="true" />
     <PackageReference Include="System.Text.Encodings.Web" Version="6.0.1" GeneratePathProperty="true" />
   </ItemGroup>
 
   <ItemGroup Condition="$(DefineConstants.Contains(DEBUG_LOGGING))">
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" GeneratePathProperty="true" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" GeneratePathProperty="true" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" GeneratePathProperty="true" />
     <PackageReference Include="System.Buffers" Version="4.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.8" GeneratePathProperty="true" />
     <PackageReference Include="System.Memory" Version="4.6.3" GeneratePathProperty="true" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="dlebansais.DebugLogging" Version="2.0.3" GeneratePathProperty="true" />
-    <PackageReference Include="dlebansais.ProcessCommunication" Version="3.0.5" GeneratePathProperty="true" />
-    <PackageReference Include="dlebansais.Method.Contracts" Version="2.0.3" GeneratePathProperty="true" />
+    <PackageReference Include="dlebansais.DebugLogging" Version="2.0.4" GeneratePathProperty="true" />
+    <PackageReference Include="dlebansais.ProcessCommunication" Version="3.0.6" GeneratePathProperty="true" />
+    <PackageReference Include="dlebansais.Method.Contracts" Version="2.0.5" GeneratePathProperty="true" />
   </ItemGroup>
 
   <ItemGroup>
